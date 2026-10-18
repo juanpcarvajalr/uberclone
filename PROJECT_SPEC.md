@@ -1,0 +1,354 @@
+# UberClone — Versión Conductor · Especificación del proyecto
+
+> **Fuente de verdad del proyecto.** Este documento resume y estructura el enunciado institucional para usarlo como contexto en Cursor.
+> Si algo aquí contradice el enunciado original, **manda el enunciado** y se debe corregir este archivo.
+
+---
+
+## 0. Cómo debe usar este documento la IA
+
+1. Leer este archivo antes de proponer arquitectura, pantallas o modelos de datos.
+2. No inventar requisitos: si algo no está aquí ni en el enunciado, preguntar al integrante.
+3. Toda interacción con IA se registra en `docs/AI_LOG.md` siguiendo `.cursor/rules/10-bitacora-ia.mdc`.
+4. Nombres de código, campos de base de datos y comentarios de código **en inglés**; textos de UI en español/inglés (i18n).
+5. Respetar las reglas de seguridad de la sección 9 sin excepciones.
+
+---
+
+## 1. Descripción general
+
+Aplicación móvil multiplataforma (iOS y Android), versión **conductor** de un clon de Uber, construida con **React Native + Expo**. El conductor:
+
+- se registra (datos personales, vehículo, documentos) y espera aprobación;
+- se pone Disponible y envía su ubicación en tiempo real;
+- recibe solicitudes con temporizador de 15 s para aceptar o rechazar;
+- navega al punto de recogida y luego al destino (Google Directions);
+- cobra con Mercado Pago (recomendado), Stripe (solo modo prueba) o efectivo;
+- consulta tarifa, comisión (20 %), ganancia neta, historial y saldo.
+
+Existe una app de **pasajero** que comparte categorías, idioma y la función `calculateFare`.
+
+---
+
+## 2. Stack técnico
+
+| Capa | Tecnología | Notas |
+|---|---|---|
+| App | React Native + Expo |
+| Mapas | `react-native-maps` (Maps SDK Android/iOS) | Uso ilimitado |
+| Rutas | Google Directions API | Solo al aceptar y al cambiar de fase |
+| Distancia/duración | Google Distance Matrix API | 1 vez al crear la solicitud, 1 vez al aceptarla |
+| Ubicación | `watchPosition` (enunciado: `@react-native-community/geolocation`) |
+| Tiempo real | Firestore `onSnapshot` **o** MongoDB Change Streams | Elegir uno (sección 15) |
+| Notificaciones | Firebase Cloud Messaging (`@react-native-firebase/messaging`) | Solicitudes con app en segundo plano |
+| Estado global | `useContext` o Redux | Sesión del conductor y viaje activo |
+| Persistencia local | AsyncStorage | **Solo** idioma, sesión y último estado de disponibilidad |
+| Imágenes | Cloudinary (plan gratuito) | Firebase Storage puede exigir plan Blaze |
+| Backend de pagos | Node.js/Express **o** Firebase Cloud Functions |
+| Pagos | Mercado Pago Checkout Pro (`react-native-webview` o navegador) / Stripe `@stripe/stripe-react-native` PaymentSheet | Solo credenciales de prueba |
+
+---
+
+## 3. Estructura de carpetas sugerida
+
+```
+/
+├─ src/
+│  ├─ config/pricing.js            # Único lugar con parámetros de tarifa
+│  ├─ utils/calculateFare.js       # Función pura compartida
+│  ├─ hooks/
+│  │  ├─ useDriverLocation.js
+│  │  ├─ useTripRequests.js
+│  │  └─ useEarnings.js
+│  ├─ context/                     # DriverSessionContext, ActiveTripContext (o store Redux)
+│  ├─ navigation/                  # Stack, Tabs, Drawer
+│  ├─ screens/
+│  │  ├─ register/                 # PersonalDataTab, VehicleTab, DocumentsTab
+│  │  ├─ HomeScreen.js
+│  │  ├─ IncomingRequestScreen.js
+│  │  ├─ TripInProgressScreen.js
+│  │  ├─ TripSummaryScreen.js
+│  │  ├─ EarningsScreen.js
+│  │  ├─ TripHistoryScreen.js
+│  │  ├─ TripDetailScreen.js
+│  │  └─ ProfileSettingsScreen.js
+│  ├─ services/                    # firestore/mongo, payments, maps, cloudinary
+│  ├─ validation/                  # Validadores puros del registro
+│  └─ i18n/                        # es, en
+├─ backend/                        # Express o Cloud Functions (pagos y webhooks)
+│  └─ .env.example
+├─ docs/
+│  ├─ PROJECT_SPEC.md              # Este archivo
+│  └─ AI_LOG.md                    # Bitácora de IA (obligatoria)
+├─ .cursor/                        # Reglas y skills para Cursor
+├─ AGENTS.md
+├─ .env.example                    # Nombres de variables, sin valores
+└─ README.md                       # Instalación, variables, sección "Uso de IA"
+```
+
+---
+
+## 4. Navegación
+
+- **Stack:** flujo del viaje (Inicio → Solicitud entrante → Viaje en curso → Cobro/Resumen).
+- **Tabs:** registro (Datos personales · Vehículo · Documentos y pagos).
+- **Drawer:** Perfil, Historial, Ganancias, Configuración.
+
+---
+
+## 5. Registro del conductor
+
+- Tres pestañas con navegación Tab. El botón **Enviar registro** solo se habilita cuando las tres están completas y válidas.
+- Ningún campo puede quedar nulo o vacío (aplicar `trim()` antes de validar).
+- Errores **debajo de cada campo**, nunca en `Alert`.
+- Al enviar: `accountStatus = "pending"`. El conductor **no puede ponerse Disponible** hasta `accountStatus = "approved"` (se simula editando la base de datos).
+
+### Pestaña 1 — Datos personales
+
+| Campo | Regla |
+|---|---|
+| Foto de perfil | Cámara o galería; obligatoria |
+| Nombre completo | Máx. 50 caracteres; solo letras (incluye tildes, ñ, ü) y espacios. Sugerido: `/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü ]{1,50}$/` |
+| Documento de identidad | Numérico, 6 a 10 dígitos: `/^\d{6,10}$/` |
+| Celular | Numérico, 10 dígitos: `/^\d{10}$/` |
+| Fecha de nacimiento | Selector de fecha; edad ≥ 18 años cumplidos |
+| Género | Lista desplegable |
+| Correo electrónico | Debe tener `@` y dominio válido |
+| Idioma | Español / inglés (mismo selector que la app del pasajero) |
+
+### Pestaña 2 — Vehículo
+
+| Campo | Regla |
+|---|---|
+| Categoría | `economy`, `xl`, `premium` (mismas del pasajero) |
+| Placa | Convertir a mayúsculas antes de validar; carro: `/^[A-Z]{3}\d{3}$/` (ABC123) |
+| Marca | Texto, máx. 30 caracteres |
+| Modelo | Texto, máx. 30 caracteres |
+| Año | 4 dígitos, no mayor al año actual |
+| Color | Lista desplegable |
+| Capacidad de pasajeros | Numérico; si categoría = `xl`, mínimo 6 |
+| Foto del vehículo | Obligatoria; debe verse la placa |
+
+### Pestaña 3 — Documentos y pagos
+
+| Campo | Regla |
+|---|---|
+| Licencia de conducción | Número + foto; vencimiento posterior a hoy |
+| SOAT | Foto + vencimiento posterior a hoy |
+| Revisión técnico-mecánica | Foto + vencimiento, **si aplica según el año del vehículo** |
+| Correo de Mercado Pago | Formato de correo válido |
+| Aceptación de términos | Checkbox obligatorio; mostrar el % de comisión vigente (leído de `pricing.js`) |
+
+> **Prohibido** guardar números de cuenta bancaria o de tarjeta en la app o en AsyncStorage. Los datos sensibles los maneja la pasarela.
+
+Recomendación: los validadores van como funciones puras en `src/validation/` para poder probarlos sin UI.
+
+---
+
+## 6. Pantallas del conductor
+
+1. **Inicio:** mapa con ubicación actual + interruptor Disponible / No disponible. Mientras está Disponible, la ubicación se actualiza en la base de datos cada pocos segundos (sugerido: 5 s o 10 m). Al pasar a No disponible o salir de la pantalla, el seguimiento se detiene con la **función de limpieza de `useEffect`**.
+2. **Solicitud entrante:** origen, destino, distancia, duración, categoría, método de pago, tarifa estimada y ganancia neta estimada. Temporizador de **15 s**; al llegar a 0 se rechaza automáticamente.
+3. **Viaje en curso:** ruta al punto de recogida; el botón **Pasajero a bordo** cambia la ruta al destino; botón **Finalizar viaje**.
+4. **Cobro y resumen:** tarifa final, comisión, ganancia neta y estado del pago (Aprobado, Pendiente, Rechazado, Efectivo).
+5. **Ganancias:** ver sección 10.
+6. **Historial:** ver sección 11.
+7. **Perfil y configuración:** datos editables, vehículo, documentos, idioma, cerrar sesión.
+
+---
+
+## 7. Estados del viaje (`status`)
+
+El campo `status` controla qué pantalla se muestra.
+
+| Estado | Significado | Transiciones válidas |
+|---|---|---|
+| `requested` | El pasajero solicitó el viaje | → `accepted`, `rejected`, `cancelled` |
+| `accepted` | El conductor aceptó | → `driver_arriving`, `cancelled` |
+| `driver_arriving` | Conductor va al punto de recogida | → `in_progress`, `cancelled` |
+| `in_progress` | Pasajero a bordo | → `completed` |
+| `completed` | Terminó; tarifa, comisión y ganancia calculadas | → `paid` |
+| `paid` | Pago confirmado por la pasarela o efectivo registrado | (final) |
+| `cancelled` | Cancelado por cualquiera **antes** de `in_progress` | (final) |
+| `rejected` | Rechazado o vencido el tiempo y sin más conductores | (final) |
+
+Si el conductor rechaza o vence el tiempo, la solicitud pasa al siguiente conductor o queda `rejected`.
+Recomendación: centralizar las transiciones en una función `canTransition(from, to)` para no escribir estados inválidos.
+
+---
+
+## 8. Hooks obligatorios
+
+| Hook | Uso exigido |
+|---|---|
+| `useState` | Disponibilidad, solicitud activa, formularios |
+| `useEffect` **con limpieza** | Seguimiento de ubicación, temporizador de solicitud, suscripciones en tiempo real |
+| `useContext` o Redux | Sesión del conductor y viaje activo |
+| `useMemo` | Totales de ganancias |
+| `useCallback` | Manejadores de aceptar y rechazar |
+| Personalizados (mínimo) | `useDriverLocation`, `useTripRequests`, `useEarnings` |
+| AsyncStorage | Solo preferencias y sesión (idioma, último estado de disponibilidad) |
+
+---
+
+## 9. Pasarela de pagos
+
+**Principal:** Mercado Pago Checkout Pro (cuentas de prueba vendedor/comprador + tarjetas de prueba).
+**Alternativa:** Stripe **solo en modo de prueba** (`sk_test` / `pk_test`, PaymentSheet).
+
+### Flujo obligatorio
+
+1. Al finalizar el viaje, la app calcula la tarifa final con **la misma** `calculateFare` usada en la estimación.
+2. La app envía al backend `tripId` y monto.
+3. El backend crea la **preferencia** (Mercado Pago) o el **PaymentIntent** (Stripe) con la llave secreta.
+4. La app abre el checkout; el pasajero paga con tarjeta de prueba.
+5. La pasarela notifica (URL de retorno o webhook) y el backend actualiza el viaje: `paymentStatus`, `paymentId`, `status: "paid"`.
+6. La app del conductor escucha el cambio en tiempo real y muestra el resumen.
+
+### Reglas de seguridad (no negociables)
+
+- `access_token` de Mercado Pago y secret key de Stripe **solo en el backend**, en `.env` excluido de Git.
+- El repo incluye `.env.example` con los nombres de variables, sin valores.
+- Solo credenciales de prueba durante todo el proyecto.
+- Nunca pegar llaves, tokens ni datos personales reales en prompts de IA.
+
+### Efectivo
+
+El conductor marca el cobro como recibido. La plataforma no recibió dinero, así que la comisión se **descuenta del saldo** del conductor (puede quedar negativo). La liquidación se simula con un saldo en la app. *Split payments* reales = reto opcional de bonificación.
+
+---
+
+## 10. Tarifa, comisión y ganancias
+
+Todos los parámetros viven en `src/config/pricing.js`. Valores en **pesos colombianos enteros**.
+
+| Parámetro | Valor |
+|---|---|
+| Tarifa base | 3.500 COP |
+| Valor por km | 1.200 COP |
+| Valor por minuto | 250 COP |
+| Tarifa mínima | 6.000 COP |
+| Multiplicador economy / xl / premium | 1,0 / 1,4 / 1,8 |
+| Comisión de la plataforma | 20 % |
+
+### Fórmulas
+
+```
+fareRaw        = (base + km * perKm + min * perMin) * multiplier[category]
+fare           = roundTo100( max(minimumFare, fareRaw) )   // múltiplo de 100 más cercano, ANTES de la comisión
+commission     = round(fare * commissionRate)
+driverEarnings = fare - commission + tip                   // la propina va completa al conductor
+```
+
+### Contrato de la función
+
+```js
+calculateFare({ distanceKm, durationMin, category, tip = 0 })
+// => { fare, commission, driverEarnings }
+```
+
+- Función **pura**, usada en la estimación del pasajero y en el cierre del viaje del conductor.
+- Cada viaje guarda el `commissionRate` aplicado para que un cambio futuro no altere el historial.
+
+### Casos de prueba obligatorios
+
+| Caso | Entrada | fare | commission | driverEarnings |
+|---|---|---|---|---|
+| Ejemplo oficial economy | 8,5 km · 22 min · economy · tip 0 | 19.200 | 3.840 | 15.360 |
+| Ejemplo oficial XL | 8,5 km · 22 min · xl · tip 0 | 26.900 | 5.380 | 21.520 |
+| Premium | 8,5 km · 22 min · premium · tip 0 | 34.600 | 6.920 | 27.680 |
+| Tarifa mínima | 1 km · 2 min · economy · tip 0 | 6.000 | 1.200 | 4.800 |
+| Con propina | 8,5 km · 22 min · economy · tip 2.000 | 19.200 | 3.840 | 17.360 |
+
+### Pantalla Ganancias
+
+Para **hoy, semana y mes**, calculado con `useMemo` sobre el historial: número de viajes, total facturado, total de comisiones, propinas, ganancia neta y promedio por viaje.
+
+**Saldo del conductor** = ganancias de viajes pagados por pasarela − comisiones de viajes en efectivo.
+
+---
+
+## 11. Historial de carreras
+
+- `FlatList`, del más reciente al más antiguo.
+- Filtros: Hoy, Semana, Mes, Rango de fechas + filtro por método de pago.
+- Ítem: fecha y hora, origen → destino, categoría, tarifa, ganancia neta, estado del pago.
+- Detalle: ruta dibujada con `Polyline` (no Static Maps), duración, distancia, comisión, propina, calificación.
+- Sin resultados: mensaje vacío (no lista en blanco).
+- Paginación o límite (ej. 20 viajes por carga).
+
+### Modelo de datos — colección `trips`
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `driverId`, `passengerId` | string | Referencias a usuarios |
+| `origin`, `destination` | object | `{ lat, lng, address }` |
+| `distanceKm`, `durationMin` | number | De Distance Matrix |
+| `category` | string | `economy`, `xl`, `premium` |
+| `fare`, `commission`, `tip`, `driverEarnings` | number | Pesos enteros |
+| `commissionRate` | number | Porcentaje aplicado (0.20) |
+| `paymentMethod` | string | `mercadopago`, `stripe`, `cash` |
+| `paymentStatus`, `paymentId` | string | Respuesta de la pasarela |
+| `status` | string | Sección 7 |
+| `rating` | number | 1 a 5 |
+| `createdAt`, `completedAt` | timestamp | Fechas del viaje |
+
+Sugerido además: `routePolyline` (string codificado) para dibujar el detalle sin volver a llamar Directions.
+
+---
+
+## 12. APIs externas y consumo
+
+| Servicio | Uso | Decisión |
+|---|---|---|
+| Firebase Cloud Messaging | Nuevas solicitudes en segundo plano | Obligatoria |
+| Firestore `onSnapshot` / Mongo Change Streams | Ubicación y estado del viaje | Obligatoria |
+| Geolocalización (`watchPosition`) | Ubicación continua | Obligatoria |
+| Maps SDK (`react-native-maps`) | Mapa | Incluida |
+| Cloudinary | Fotos de perfil, vehículo, documentos | Recomendada |
+| Nominatim (OSM) | Coordenadas → dirección (máx. 1 req/s) | Opcional |
+| OSRM / OpenRouteService | Rutas alternativas para ahorrar cupo | Opcional |
+
+Reglas de consumo:
+- Distance Matrix: **una vez** al crear la solicitud y **una vez** al aceptarla. Nunca en cada movimiento.
+- Restringir la API key de Google por aplicación y activar alertas de presupuesto.
+- Historial: `Polyline` con ruta guardada, no Static Maps.
+
+---
+
+## 13. Bitácora de IA (obligatoria)
+
+Protocolo completo en `.cursor/rules/10-bitacora-ia.mdc` y skill `bitacora-ia`. Resumen:
+
+- Archivo `docs/AI_LOG.md` en `main`. Proyecto individual: se registra y se hace commit directamente en `main`.
+- `README.md` con sección **Uso de IA** enlazando la bitácora.
+- Se entrega también en PDF.
+- Registrar en el momento, prompt **textual**, resumen en 2–3 líneas, qué se usó/modificó/descartó, archivos + hash de commit, verificación y aprendizaje.
+- Bloques asistidos marcados con `// AI-assisted: see docs/AI_LOG.md #N`; commits con la línea `AI-Log: #N`.
+- En la sustentación se puede pedir explicar cualquier bloque asistido.
+
+---
+
+## 14. Entregables y definición de terminado
+
+- [ ] Repositorio en `main` con historial de commits claro.
+- [ ] `README.md` con instalación, variables de entorno (`.env.example`) y sección **Uso de IA**.
+- [ ] `docs/AI_LOG.md` + exportación PDF.
+- [ ] Video ≤ 5 min: registro, solicitud, viaje, pago de prueba e historial.
+- [ ] `calculateFare` pasa los casos de prueba de la sección 10.
+- [ ] Ninguna llave secreta en el código de la app ni en el historial de Git.
+- [ ] Todos los `// AI-assisted` apuntan a una entrada existente en la bitácora.
+
+---
+
+## 15. Decisiones del equipo (completar)
+
+| Decisión | Opciones | Elegida | Fecha / responsable |
+|---|---|---|---|
+| Base de datos en tiempo real | Firestore / MongoDB | | |
+| Backend de pagos | Express / Cloud Functions | | |
+| Pasarela | Mercado Pago / Stripe | | |
+| Estado global | Context / Redux | | |
+| Librería de ubicación | `@react-native-community/geolocation` / `expo-location` | | |
+| APIs de rutas | Directions + Distance Matrix / Routes API / OSRM | | |
+| Regla de revisión técnico-mecánica | — | | |

@@ -1,0 +1,15 @@
+---
+description: Reglas para tarifas, comisiones, ganancias y pagos
+globs: ["**/pricing.js", "**/calculateFare*", "**/useEarnings*", "**/payments/**", "backend/**"]
+alwaysApply: false
+---
+
+# Tarifas y pagos
+
+- Parámetros solo en `src/config/pricing.js`. Prohibido hardcodear montos o el 20 % en otros archivos.
+- `calculateFare({ distanceKm, durationMin, category, tip = 0 }) => { fare, commission, driverEarnings }` es **pura** y única; la usan pasajero y conductor.
+- Orden: tarifa cruda × multiplicador → `max` con tarifa mínima → redondear al múltiplo de 100 más cercano → comisión `Math.round(fare * rate)` → ganancia = fare − commission + tip.
+- Cada viaje persiste su `commissionRate`; los reportes históricos usan el valor guardado, no el de `pricing.js`.
+- Los casos de prueba de la sección 10 de @docs/PROJECT_SPEC.md deben pasar siempre (8,5 km/22 min → economy 19.200/3.840/15.360; xl 26.900/5.380/21.520).
+- Efectivo: la comisión se descuenta del saldo del conductor (puede ser negativo).
+- Solo el backend cambia `paymentStatus`, `paymentId` y `status: "paid"` tras la notificación de la pasarela.

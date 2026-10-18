@@ -1,0 +1,26 @@
+---
+description: Contexto general del proyecto UberClone Conductor
+alwaysApply: true
+---
+
+# Contexto del proyecto
+
+- Proyecto académico institucional: app de **conductor** tipo Uber en React Native + Expo (iOS y Android).
+- Fuente de verdad: @docs/PROJECT_SPEC.md. No inventar requisitos; si falta información, preguntar.
+- Antes de crear una pantalla, hook o servicio, verificar en la spec: navegación (sección 4), estados (7), hooks obligatorios (8) y modelo de datos (11).
+
+## Convenciones
+
+- Código, variables, campos de base de datos y comentarios: **inglés**. Textos de UI: vía i18n (es/en).
+- Componentes funcionales con hooks. Nada de componentes de clase.
+- Toda suscripción, `watchPosition`, temporizador o listener se crea en un `useEffect` **con función de limpieza**.
+- Manejadores de aceptar/rechazar con `useCallback`; totales de ganancias con `useMemo`.
+- Errores de formulario debajo de cada campo, nunca en `Alert`.
+- Montos siempre en pesos enteros (COP). Nada de decimales en dinero persistido.
+- Lógica de negocio (validaciones, tarifa, transiciones de estado) en funciones puras y testeables, separadas de la UI.
+- Cambios pequeños y enfocados: una solicitud del integrante = un cambio coherente y explicable en la sustentación.
+
+## Al terminar cualquier cambio de código
+
+1. Registrar la entrada en la bitácora (regla `10-bitacora-ia`).
+2. Explicar brevemente al integrante qué hace el código, para que pueda defenderlo en la sustentación.

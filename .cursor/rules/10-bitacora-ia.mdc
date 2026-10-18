@@ -1,0 +1,70 @@
+---
+description: Protocolo obligatorio para documentar todo uso de IA en docs/AI_LOG.md
+alwaysApply: true
+---
+
+# Protocolo de bitácora de IA (OBLIGATORIO)
+
+Usar IA está permitido; **no declararlo es falta de honestidad académica**. Cada respuesta tuya en este repositorio debe quedar registrada en `docs/AI_LOG.md`. Para el procedimiento detallado, usar la skill `bitacora-ia` si está disponible.
+
+Contexto: proyecto **individual**. Se trabaja directamente sobre `main`, sin ramas ni Pull Requests.
+
+## 1. Al inicio de cada solicitud
+
+Buscar entradas con `Commit: pendiente`. Para cada una, buscar su commit con
+`git log --grep="^AI-Log: #<N>$" --format="%h"` (ej. `--grep="^AI-Log: #7$"`, el ancla evita confundir #7 con #70).
+Si existe, reemplazar `pendiente` por el hash. Si no existe, dejarlo igual. **Nunca inventar un hash.**
+
+## 2. Siguiente ID
+
+- Formato numérico del enunciado: `#<N>` (ej. `#7`).
+- Siguiente ID = mayor número existente en `docs/AI_LOG.md` + 1.
+
+## 3. Crear la entrada (al final de tu respuesta, siempre)
+
+Agregar la entrada **al final del archivo**, con esta plantilla exacta. El nombre del integrante se toma del encabezado de `docs/AI_LOG.md`.
+
+````markdown
+### Entrada #7
+- Fecha: AAAA-MM-DD
+- Integrante: Nombre Apellido
+- Herramienta: Cursor (<modo: Agent/Ask/Edit>, modelo: <nombre si se conoce>)
+- Objetivo: <una línea>
+- Prompt:
+  ```text
+  <mensaje del integrante COPIADO TEXTUALMENTE, sin resumir ni corregir>
+  ```
+- Resumen de la respuesta: <2 o 3 líneas>
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: <qué generaste o cambiaste>
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `ruta/archivo1.js`, `ruta/archivo2.js` — Commit: pendiente
+- Verificación: _pendiente — sugerida: <cómo probarlo: emulador, caso de prueba, documentación>_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+````
+
+Reglas de contenido:
+- El **Prompt** es literal. Si el mensaje incluye secretos o datos personales reales, reemplazarlos por `[REDACTADO]` y avisar.
+- **No escribir** el campo Aprendizaje ni dar por hecha la Verificación: los completa el integrante. La IA solo sugiere cómo verificar.
+- Consultas sin cambios de código también se registran (Archivos: `ninguno`).
+- Una entrada por solicitud del integrante, no una por archivo.
+- Si estás en modo Ask y no puedes editar, entregar la entrada completa en un bloque para que el integrante la pegue.
+
+## 4. Marcar el código asistido
+
+- En cada bloque generado o modificado sustancialmente, agregar arriba:
+  `// AI-assisted: see docs/AI_LOG.md #7`
+- En JSX dentro del return: `{/* AI-assisted: see docs/AI_LOG.md #7 */}`.
+- En archivos sin comentarios (JSON): no marcar; basta con listarlos en la entrada.
+- No borrar marcas anteriores; si un bloque ya marcado se modifica otra vez, agregar el nuevo ID: `#3, #7`.
+
+## 5. Cerrar la respuesta
+
+Terminar siempre recordándole al integrante, en 2–3 líneas:
+1. Revisar el cambio y completar *Decisión del integrante*, *Verificación* y *Aprendizaje*.
+2. Hacer commit en `main` incluyendo la bitácora, con este mensaje sugerido (la última línea exacta):
+   ```
+   <tipo>: <descripción corta>
+
+   AI-Log: #7
+   ```
