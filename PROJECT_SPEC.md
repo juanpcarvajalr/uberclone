@@ -34,18 +34,18 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 
 | Capa | Tecnología | Notas |
 |---|---|---|
-| App | React Native + Expo |
+| App | React Native + Expo | |
 | Mapas | `react-native-maps` (Maps SDK Android/iOS) | Uso ilimitado |
 | Rutas | Google Directions API | Solo al aceptar y al cambiar de fase |
 | Distancia/duración | Google Distance Matrix API | 1 vez al crear la solicitud, 1 vez al aceptarla |
-| Ubicación | `watchPosition` (enunciado: `@react-native-community/geolocation`) |
-| Tiempo real | Firestore `onSnapshot` **o** MongoDB Change Streams | Elegir uno (sección 15) |
+| Ubicación | `@react-native-community/geolocation` (`watchPosition`) | |
+| Tiempo real | Firestore `onSnapshot` | |
 | Notificaciones | Firebase Cloud Messaging (`@react-native-firebase/messaging`) | Solicitudes con app en segundo plano |
-| Estado global | `useContext` o Redux | Sesión del conductor y viaje activo |
+| Estado global | React Context (`useContext` + `useReducer`) | Sesión del conductor y viaje activo (sección 8) |
 | Persistencia local | AsyncStorage | **Solo** idioma, sesión y último estado de disponibilidad |
 | Imágenes | Cloudinary (plan gratuito) | Firebase Storage puede exigir plan Blaze |
-| Backend de pagos | Node.js/Express **o** Firebase Cloud Functions |
-| Pagos | Mercado Pago Checkout Pro (`react-native-webview` o navegador) / Stripe `@stripe/stripe-react-native` PaymentSheet | Solo credenciales de prueba |
+| Backend de pagos | Node.js/Express | |
+| Pagos | Mercado Pago Checkout Pro (`react-native-webview` o navegador) | Solo credenciales de prueba |
 
 ---
 
@@ -60,7 +60,9 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 │  │  ├─ useDriverLocation.js
 │  │  ├─ useTripRequests.js
 │  │  └─ useEarnings.js
-│  ├─ context/                     # DriverSessionContext, ActiveTripContext (o store Redux)
+│  ├─ context/
+│  │  ├─ DriverSessionContext.js   # Conductor autenticado, perfil, vehículo, accountStatus
+│  │  └─ ActiveTripContext.js      # Viaje activo + reducer de transiciones de estado
 │  ├─ navigation/                  # Stack, Tabs, Drawer
 │  ├─ screens/
 │  │  ├─ register/                 # PersonalDataTab, VehicleTab, DocumentsTab
@@ -72,15 +74,16 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 │  │  ├─ TripHistoryScreen.js
 │  │  ├─ TripDetailScreen.js
 │  │  └─ ProfileSettingsScreen.js
-│  ├─ services/                    # firestore/mongo, payments, maps, cloudinary
+│  ├─ services/                    # firestore, payments, maps, cloudinary
 │  ├─ validation/                  # Validadores puros del registro
 │  └─ i18n/                        # es, en
-├─ backend/                        # Express o Cloud Functions (pagos y webhooks)
+├─ backend/                        # Express (pagos y webhooks)
 │  └─ .env.example
 ├─ docs/
 │  ├─ PROJECT_SPEC.md              # Este archivo
 │  └─ AI_LOG.md                    # Bitácora de IA (obligatoria)
 ├─ .cursor/                        # Reglas y skills para Cursor
+├─ firestore.rules                 # Permisos por colección (sección 11)
 ├─ AGENTS.md
 ├─ .env.example                    # Nombres de variables, sin valores
 └─ README.md                       # Instalación, variables, sección "Uso de IA"
@@ -101,7 +104,8 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 - Tres pestañas con navegación Tab. El botón **Enviar registro** solo se habilita cuando las tres están completas y válidas.
 - Ningún campo puede quedar nulo o vacío (aplicar `trim()` antes de validar).
 - Errores **debajo de cada campo**, nunca en `Alert`.
-- Al enviar: `accountStatus = "pending"`. El conductor **no puede ponerse Disponible** hasta `accountStatus = "approved"` (se simula editando la base de datos).
+- Al enviar se crean, en una sola escritura atómica (`writeBatch`), los documentos `drivers/{uid}`, `vehicles/{vehicleId}` y `driverLocations/{uid}` (sección 11). El conductor queda con `accountStatus = "pending"` e `isAvailable = false`.
+- El conductor **no puede ponerse Disponible** hasta `accountStatus = "approved"` (se simula editando el documento en la consola de Firestore).
 
 ### Pestaña 1 — Datos personales
 
@@ -125,6 +129,7 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 | Marca | Texto, máx. 30 caracteres |
 | Modelo | Texto, máx. 30 caracteres |
 | Año | 4 dígitos, no mayor al año actual |
+| Fecha de matrícula | Selector de fecha (licencia de tránsito). No puede ser futura ni anterior al 1 de enero de (año del modelo − 1). Determina si se exige la revisión técnico-mecánica |
 | Color | Lista desplegable |
 | Capacidad de pasajeros | Numérico; si categoría = `xl`, mínimo 6 |
 | Foto del vehículo | Obligatoria; debe verse la placa |
@@ -135,7 +140,7 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 |---|---|
 | Licencia de conducción | Número + foto; vencimiento posterior a hoy |
 | SOAT | Foto + vencimiento posterior a hoy |
-| Revisión técnico-mecánica | Foto + vencimiento, **si aplica según el año del vehículo** |
+| Revisión técnico-mecánica | Solo si `isTechnicalInspectionRequired(registrationDate)` es `true`: foto + vencimiento posterior a hoy, ambos obligatorios. Si es `false`, la pestaña muestra "No requerida hasta <fecha>" y los campos no se exigen (ver regla abajo) |
 | Correo de Mercado Pago | Formato de correo válido |
 | Aceptación de términos | Checkbox obligatorio; mostrar el % de comisión vigente (leído de `pricing.js`) |
 
@@ -143,11 +148,33 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 
 Recomendación: los validadores van como funciones puras en `src/validation/` para poder probarlos sin UI.
 
+### Regla de revisión técnico-mecánica
+
+Vehículo particular nuevo (no moto): la primera revisión se exige a los **5 años contados desde la fecha de matrícula**.
+
+```js
+isTechnicalInspectionRequired(registrationDate, today = new Date())
+// => true si today >= registrationDate + 5 años
+```
+
+- Función pura en `src/validation/`, con el plazo (5) en una constante configurable.
+- Comparar solo fechas (sin hora), en zona horaria America/Bogota. Sumar años con `addYears` de `date-fns`.
+- Si la revisión no es requerida, guardar la fecha en que empezará a serlo (`documents.technicalInspection.requiredFrom`), para mostrarla en el perfil.
+- Supuesto académico: no se modelan motos ni vehículos de servicio público (plazos distintos).
+
+| Caso (hoy = 2026-10-26) | registrationDate | Resultado |
+|---|---|---|
+| Menos de 5 años | 2022-03-10 | `false` |
+| Un día antes del plazo | 2021-10-27 | `false` |
+| Exactamente 5 años | 2021-10-26 | `true` |
+| Más de 5 años | 2020-01-15 | `true` |
+| Fecha futura | 2027-01-01 | Error de validación |
+
 ---
 
 ## 6. Pantallas del conductor
 
-1. **Inicio:** mapa con ubicación actual + interruptor Disponible / No disponible. Mientras está Disponible, la ubicación se actualiza en la base de datos cada pocos segundos (sugerido: 5 s o 10 m). Al pasar a No disponible o salir de la pantalla, el seguimiento se detiene con la **función de limpieza de `useEffect`**.
+1. **Inicio:** mapa con ubicación actual + interruptor Disponible / No disponible. Mientras está Disponible, la ubicación se actualiza en `driverLocations/{uid}` cada pocos segundos (sugerido: 5 s o 10 m). Al pasar a No disponible o salir de la pantalla, el seguimiento se detiene con la **función de limpieza de** `useEffect`.
 2. **Solicitud entrante:** origen, destino, distancia, duración, categoría, método de pago, tarifa estimada y ganancia neta estimada. Temporizador de **15 s**; al llegar a 0 se rechaza automáticamente.
 3. **Viaje en curso:** ruta al punto de recogida; el botón **Pasajero a bordo** cambia la ruta al destino; botón **Finalizar viaje**.
 4. **Cobro y resumen:** tarifa final, comisión, ganancia neta y estado del pago (Aprobado, Pendiente, Rechazado, Efectivo).
@@ -173,21 +200,31 @@ El campo `status` controla qué pantalla se muestra.
 | `rejected` | Rechazado o vencido el tiempo y sin más conductores | (final) |
 
 Si el conductor rechaza o vence el tiempo, la solicitud pasa al siguiente conductor o queda `rejected`.
-Recomendación: centralizar las transiciones en una función `canTransition(from, to)` para no escribir estados inválidos.
+Centralizar las transiciones en una función pura `canTransition(from, to)`, usada por el reducer de `ActiveTripContext` (sección 8) para no escribir estados inválidos.
 
 ---
 
-## 8. Hooks obligatorios
+## 8. Hooks obligatorios y estado global
 
 | Hook | Uso exigido |
 |---|---|
 | `useState` | Disponibilidad, solicitud activa, formularios |
 | `useEffect` **con limpieza** | Seguimiento de ubicación, temporizador de solicitud, suscripciones en tiempo real |
-| `useContext` o Redux | Sesión del conductor y viaje activo |
+| `useContext` | Sesión del conductor y viaje activo |
 | `useMemo` | Totales de ganancias |
 | `useCallback` | Manejadores de aceptar y rechazar |
 | Personalizados (mínimo) | `useDriverLocation`, `useTripRequests`, `useEarnings` |
 | AsyncStorage | Solo preferencias y sesión (idioma, último estado de disponibilidad) |
+
+### Estado global con React Context
+
+Se usa **Context, no Redux**: el estado global es pequeño (sesión y viaje activo) y Firestore (`onSnapshot`) ya es la fuente de verdad en tiempo real, así que Redux solo agregaría configuración. Además, `useContext` es uno de los hooks exigidos.
+
+- **Dos contextos separados**, para que una actualización del viaje no vuelva a renderizar todo lo que depende de la sesión:
+  - `DriverSessionContext`: usuario autenticado, documento `drivers/{uid}`, vehículo y `accountStatus`. Se suscribe con `onSnapshot`, así el cambio a `approved` en la consola se refleja sin reiniciar la app.
+  - `ActiveTripContext`: viaje activo, suscrito con `onSnapshot` a `trips/{tripId}`. Usa `useReducer` y valida cada cambio de estado con `canTransition`.
+- Cada contexto expone un hook propio (`useDriverSession()`, `useActiveTrip()`) que lanza un error si se usa fuera de su Provider.
+- El `value` del Provider se memoriza con `useMemo` y las acciones con `useCallback`.
 
 ---
 
@@ -264,11 +301,13 @@ calculateFare({ distanceKm, durationMin, category, tip = 0 })
 
 Para **hoy, semana y mes**, calculado con `useMemo` sobre el historial: número de viajes, total facturado, total de comisiones, propinas, ganancia neta y promedio por viaje.
 
-**Saldo del conductor** = ganancias de viajes pagados por pasarela − comisiones de viajes en efectivo.
+**Saldo del conductor** = ganancias de viajes pagados por pasarela − comisiones de viajes en efectivo. Se **calcula** a partir de `trips`; no se guarda como campo, para evitar que quede desincronizado.
 
 ---
 
-## 11. Historial de carreras
+## 11. Historial de carreras y modelo de datos
+
+### Historial
 
 - `FlatList`, del más reciente al más antiguo.
 - Filtros: Hoy, Semana, Mes, Rango de fechas + filtro por método de pago.
@@ -277,23 +316,83 @@ Para **hoy, semana y mes**, calculado con `useMemo` sobre el historial: número 
 - Sin resultados: mensaje vacío (no lista en blanco).
 - Paginación o límite (ej. 20 viajes por carga).
 
-### Modelo de datos — colección `trips`
+### Modelo de datos (Firestore)
+
+Cuatro colecciones. Conductor y vehículo van separados porque **Firestore no permite ocultar campos de un documento**: la app del pasajero necesita ver la placa y el color del carro, pero no debe poder leer el documento de identidad ni la fecha de nacimiento del conductor. Lo mismo aplica a la ubicación, que además se escribe cada pocos segundos y no debe disparar actualizaciones del perfil.
+
+| Colección | Contenido | Quién lee | Quién escribe |
+|---|---|---|---|
+| `drivers/{uid}` | Datos personales y documentos (privado) | Solo el propio conductor | El propio conductor, excepto `accountStatus` (solo consola) |
+| `vehicles/{vehicleId}` | Datos públicos del vehículo | Usuarios autenticados | El conductor dueño |
+| `driverLocations/{uid}` | Disponibilidad y ubicación | Usuarios autenticados | El propio conductor |
+| `trips/{tripId}` | Viajes | Conductor y pasajero del viaje | App: transiciones de estado · Backend: campos de pago |
+
+Estas reglas se implementan en `firestore.rules`. El `uid` es el de Firebase Authentication.
+
+#### `drivers/{uid}`
 
 | Campo | Tipo | Descripción |
 |---|---|---|
-| `driverId`, `passengerId` | string | Referencias a usuarios |
+| `fullName` | string | Máx. 50 caracteres |
+| `documentNumber` | string | 6 a 10 dígitos (string para conservar ceros a la izquierda) |
+| `phone` | string | 10 dígitos |
+| `birthDate` | timestamp | Mayor de 18 años |
+| `gender` | string | Valor de la lista |
+| `email` | string | Correo del conductor |
+| `language` | string | `es`, `en` |
+| `profilePhotoUrl` | string | URL de Cloudinary |
+| `vehicleId` | string | Referencia a `vehicles` |
+| `accountStatus` | string | `pending`, `approved`, `rejected` |
+| `documents.driverLicense` | object | `{ number, photoUrl, expiresAt }` |
+| `documents.soat` | object | `{ photoUrl, expiresAt }` |
+| `documents.technicalInspection` | object | `{ required, requiredFrom, photoUrl?, expiresAt? }` (sección 5) |
+| `mercadoPagoEmail` | string | Correo donde recibiría pagos |
+| `termsAcceptedAt` | timestamp | Fecha de aceptación de términos |
+| `termsCommissionRate` | number | Comisión mostrada al aceptar (0.20) |
+| `fcmToken` | string | Token de Firebase Cloud Messaging |
+| `createdAt`, `updatedAt` | timestamp | Auditoría |
+
+#### `vehicles/{vehicleId}`
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `driverId` | string | Dueño (`uid`) |
+| `category` | string | `economy`, `xl`, `premium` |
+| `plate` | string | Mayúsculas, formato ABC123 |
+| `brand`, `model` | string | Máx. 30 caracteres cada uno |
+| `year` | number | 4 dígitos |
+| `registrationDate` | timestamp | Fecha de matrícula |
+| `color` | string | Valor de la lista |
+| `passengerCapacity` | number | XL ≥ 6 |
+| `photoUrl` | string | URL de Cloudinary |
+| `createdAt`, `updatedAt` | timestamp | Auditoría |
+
+#### `driverLocations/{uid}`
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `isAvailable` | boolean | Interruptor Disponible / No disponible |
+| `location` | object | `{ lat, lng }` |
+| `category` | string | Copia de la categoría del vehículo, para filtrar solicitudes sin leer `vehicles` |
+| `updatedAt` | timestamp | Última actualización de ubicación |
+
+#### `trips/{tripId}`
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `driverId`, `passengerId` | string | Referencias a los usuarios |
+| `vehicleId` | string | Vehículo con el que se hizo el viaje |
 | `origin`, `destination` | object | `{ lat, lng, address }` |
 | `distanceKm`, `durationMin` | number | De Distance Matrix |
 | `category` | string | `economy`, `xl`, `premium` |
 | `fare`, `commission`, `tip`, `driverEarnings` | number | Pesos enteros |
-| `commissionRate` | number | Porcentaje aplicado (0.20) |
+| `commissionRate` | number | Porcentaje aplicado en ese viaje (0.20) |
 | `paymentMethod` | string | `mercadopago`, `stripe`, `cash` |
 | `paymentStatus`, `paymentId` | string | Respuesta de la pasarela |
 | `status` | string | Sección 7 |
 | `rating` | number | 1 a 5 |
+| `routePolyline` | string | Ruta codificada, para dibujar el detalle sin volver a llamar Directions |
 | `createdAt`, `completedAt` | timestamp | Fechas del viaje |
-
-Sugerido además: `routePolyline` (string codificado) para dibujar el detalle sin volver a llamar Directions.
 
 ---
 
@@ -302,7 +401,7 @@ Sugerido además: `routePolyline` (string codificado) para dibujar el detalle si
 | Servicio | Uso | Decisión |
 |---|---|---|
 | Firebase Cloud Messaging | Nuevas solicitudes en segundo plano | Obligatoria |
-| Firestore `onSnapshot` / Mongo Change Streams | Ubicación y estado del viaje | Obligatoria |
+| Firestore `onSnapshot` | Ubicación y estado del viaje | Obligatoria |
 | Geolocalización (`watchPosition`) | Ubicación continua | Obligatoria |
 | Maps SDK (`react-native-maps`) | Mapa | Incluida |
 | Cloudinary | Fotos de perfil, vehículo, documentos | Recomendada |
@@ -310,6 +409,7 @@ Sugerido además: `routePolyline` (string codificado) para dibujar el detalle si
 | OSRM / OpenRouteService | Rutas alternativas para ahorrar cupo | Opcional |
 
 Reglas de consumo:
+
 - Distance Matrix: **una vez** al crear la solicitud y **una vez** al aceptarla. Nunca en cada movimiento.
 - Restringir la API key de Google por aplicación y activar alertas de presupuesto.
 - Historial: `Polyline` con ruta guardada, no Static Maps.
@@ -336,19 +436,22 @@ Protocolo completo en `.cursor/rules/10-bitacora-ia.mdc` y skill `bitacora-ia`. 
 - [ ] `docs/AI_LOG.md` + exportación PDF.
 - [ ] Video ≤ 5 min: registro, solicitud, viaje, pago de prueba e historial.
 - [ ] `calculateFare` pasa los casos de prueba de la sección 10.
+- [ ] `isTechnicalInspectionRequired` pasa los casos de prueba de la sección 5.
+- [ ] `firestore.rules` aplica los permisos de la sección 11.
 - [ ] Ninguna llave secreta en el código de la app ni en el historial de Git.
 - [ ] Todos los `// AI-assisted` apuntan a una entrada existente en la bitácora.
 
 ---
 
-## 15. Decisiones del equipo (completar)
+## 15. Decisiones del equipo
 
-| Decisión | Opciones | Elegida | Fecha / responsable |
-|---|---|---|---|
-| Base de datos en tiempo real | Firestore / MongoDB | | |
-| Backend de pagos | Express / Cloud Functions | | |
-| Pasarela | Mercado Pago / Stripe | | |
-| Estado global | Context / Redux | | |
-| Librería de ubicación | `@react-native-community/geolocation` / `expo-location` | | |
-| APIs de rutas | Directions + Distance Matrix / Routes API / OSRM | | |
-| Regla de revisión técnico-mecánica | — | | |
+| Decisión                           | Opciones                                                | Elegida                                  | Fecha / responsable |
+| ---------------------------------- | ------------------------------------------------------- | ---------------------------------------- | ------------------- |
+| Base de datos en tiempo real       | Firestore / MongoDB                                     | Firestore                                |                     |
+| Backend de pagos                   | Express / Cloud Functions                               | Express                                  |                     |
+| Pasarela                           | Mercado Pago / Stripe                                   | Mercado Pago                             |                     |
+| Estado global                      | Context / Redux                                         | Context (`useContext` + `useReducer`)    |                     |
+| Librería de ubicación              | `@react-native-community/geolocation` / `expo-location` | `@react-native-community/geolocation`    |                     |
+| APIs de rutas                      | Directions + Distance Matrix / Routes API / OSRM        | Directions + Distance Matrix             |                     |
+| Regla de revisión técnico-mecánica | —                                                       | Fecha de matrícula + 5 años              |                     |
+| Modelo de datos                    | Conductor con vehículo embebido / colecciones separadas | Colecciones separadas (sección 11)       |                     |
