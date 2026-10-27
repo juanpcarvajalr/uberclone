@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Protocolo de bitácora de IA (OBLIGATORIO)
 
-Usar IA está permitido; **no declararlo es falta de honestidad académica**. Cada respuesta tuya en este repositorio debe quedar registrada en `docs/AI_LOG.md`. Para el procedimiento detallado, usar la skill `bitacora-ia` si está disponible.
+Usar IA está permitido; **no declararlo es falta de honestidad académica**. Cada respuesta tuya en este repositorio debe quedar registrada en `docs/AI_LOG.md`, **salvo** que el integrante diga explícitamente que esa solicitud no debe incluirse en el log (ver skill `bitacora-ia` §A.0). Para el procedimiento detallado, usar la skill `bitacora-ia` si está disponible.
 
 Contexto: proyecto **individual**. Se trabaja directamente sobre `main`, sin ramas ni Pull Requests.
 
@@ -20,9 +20,11 @@ Si existe, reemplazar `pendiente` por el hash. Si no existe, dejarlo igual. **Nu
 - Formato numérico del enunciado: `#<N>` (ej. `#7`).
 - Siguiente ID = mayor número existente en `docs/AI_LOG.md` + 1.
 
-## 3. Crear la entrada (al final de tu respuesta, siempre)
+## 3. Crear la entrada (al final de tu respuesta)
 
-Agregar la entrada **al final del archivo**, con esta plantilla exacta. El nombre del integrante se toma del encabezado de `docs/AI_LOG.md`.
+Si el integrante pidió **no** registrar esta solicitud en la bitácora, omitir por completo este paso (y el recordatorio `AI-Log` de la sección 5).
+
+En cualquier otro caso, agregar la entrada **al final del archivo**, con esta plantilla exacta. El nombre del integrante se toma del encabezado de `docs/AI_LOG.md`.
 
 ````markdown
 ### Entrada #7
@@ -45,7 +47,8 @@ Agregar la entrada **al final del archivo**, con esta plantilla exacta. El nombr
 
 Reglas de contenido:
 - El **Prompt** es literal. Si el mensaje incluye secretos o datos personales reales, reemplazarlos por `[REDACTADO]` y avisar.
-- **No escribir** el campo Aprendizaje ni dar por hecha la Verificación: los completa el integrante. La IA solo sugiere cómo verificar.
+- **Tono:** Objetivo, Resumen y (si aplica) Decisión/Verificación/Aprendizaje deben sonar a estudiante resolviendo una duda o un error concreto — no a “la IA entregó el módulo”. Detalle y ejemplos en la skill `bitacora-ia` sección E.
+- **No escribir** Aprendizaje ni dar por hecha la Verificación, salvo que el integrante pida explícitamente completarlos (entonces: primera persona, estilo sección E de la skill). Si no lo pide, la IA solo sugiere cómo verificar en el placeholder.
 - Consultas sin cambios de código también se registran (Archivos: `ninguno`).
 - Una entrada por solicitud del integrante, no una por archivo.
 - Si estás en modo Ask y no puedes editar, entregar la entrada completa en un bloque para que el integrante la pegue.
