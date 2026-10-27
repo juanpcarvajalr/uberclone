@@ -1,10 +1,12 @@
-// AI-assisted: see docs/AI_LOG.md #19, #29
+// AI-assisted: see docs/AI_LOG.md #19, #27, #28
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { useDriverSession } from '../context/DriverSessionContext';
 import { t } from '../i18n';
 import { colors } from '../theme/colors';
+import { commonStyles } from '../theme/commonStyles';
+import { spacing } from '../theme/tokens';
 
 const COUNTDOWN_SECONDS = 15;
 
@@ -66,39 +68,41 @@ export default function IncomingRequestScreen({ navigation }) {
 
   if (!trip) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.muted}>Sin solicitud activa</Text>
+      <View style={[commonStyles.screenPadded, styles.centered]}>
+        <Text style={commonStyles.muted}>Sin solicitud activa</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* AI-assisted: see docs/AI_LOG.md #19 */}
-      <Text style={styles.title}>{t(lang, 'incomingTitle')}</Text>
-      <Text style={styles.timer}>{secondsLeft}s</Text>
+    <View style={[commonStyles.screenPadded, styles.centered]}>
+      {/* AI-assisted: see docs/AI_LOG.md #19, #27 */}
+      <Text style={[commonStyles.title, styles.centerText]}>{t(lang, 'incomingTitle')}</Text>
+      <Text style={commonStyles.timer}>{secondsLeft}s</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.line}>Pasajero: {trip.passengerName ?? '—'}</Text>
-        <Text style={styles.line}>Origen: {trip.origin.address}</Text>
-        <Text style={styles.line}>Destino: {trip.destination.address}</Text>
-        <Text style={styles.line}>
+      <View style={commonStyles.card}>
+        <Text style={commonStyles.body}>Pasajero: {trip.passengerName ?? '—'}</Text>
+        <Text style={commonStyles.body}>Origen: {trip.origin.address}</Text>
+        <Text style={commonStyles.body}>Destino: {trip.destination.address}</Text>
+        <Text style={commonStyles.body}>
           Distancia: {trip.distanceKm} km · {trip.durationMin} min
         </Text>
-        <Text style={styles.line}>Categoría: {trip.category}</Text>
-        <Text style={styles.line}>Pago: {trip.paymentMethod}</Text>
-        <Text style={styles.fare}>Tarifa estimada: ${trip.fare.toLocaleString('es-CO')}</Text>
+        <Text style={commonStyles.body}>Categoría: {trip.category}</Text>
+        <Text style={commonStyles.body}>Pago: {trip.paymentMethod}</Text>
+        <Text style={styles.fare}>
+          Tarifa estimada: ${trip.fare.toLocaleString('es-CO')}
+        </Text>
         <Text style={styles.earn}>
           Ganancia neta: ${trip.driverEarnings.toLocaleString('es-CO')}
         </Text>
       </View>
 
       <View style={styles.actions}>
-        <Pressable style={[styles.btn, styles.reject]} onPress={onReject}>
-          <Text style={styles.btnText}>{t(lang, 'reject')}</Text>
+        <Pressable style={[styles.actionBtn, commonStyles.dangerButton]} onPress={onReject}>
+          <Text style={commonStyles.primaryButtonText}>{t(lang, 'reject')}</Text>
         </Pressable>
-        <Pressable style={[styles.btn, styles.accept]} onPress={onAccept}>
-          <Text style={styles.btnText}>{t(lang, 'accept')}</Text>
+        <Pressable style={[styles.actionBtn, commonStyles.accentButton]} onPress={onAccept}>
+          <Text style={commonStyles.primaryButtonText}>{t(lang, 'accept')}</Text>
         </Pressable>
       </View>
     </View>
@@ -106,40 +110,15 @@ export default function IncomingRequestScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: 20,
-    justifyContent: 'center',
+  centered: { justifyContent: 'center' },
+  centerText: { textAlign: 'center' },
+  fare: {
+    marginTop: spacing.sm,
+    fontWeight: '700',
+    color: colors.primary,
+    fontSize: 16,
   },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  timer: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: colors.warning,
-    textAlign: 'center',
-    marginVertical: 12,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  line: { color: colors.text, fontSize: 15 },
-  fare: { marginTop: 8, fontWeight: '700', color: colors.primary, fontSize: 16 },
   earn: { fontWeight: '600', color: colors.accent, fontSize: 16 },
-  actions: { flexDirection: 'row', gap: 12, marginTop: 20 },
-  btn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  reject: { backgroundColor: colors.danger },
-  accept: { backgroundColor: colors.accent },
-  btnText: { color: '#fff', fontWeight: '700' },
-  muted: { textAlign: 'center', color: colors.textMuted },
+  actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
+  actionBtn: { flex: 1 },
 });

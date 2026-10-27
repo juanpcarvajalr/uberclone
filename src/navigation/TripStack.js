@@ -8,6 +8,7 @@ import IncomingRequestScreen from '../screens/IncomingRequestScreen';
 import TripInProgressScreen from '../screens/TripInProgressScreen';
 import TripSummaryScreen from '../screens/TripSummaryScreen';
 import { colors } from '../theme/colors';
+import { headerScreenOptions } from '../theme/navigationTheme';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,12 +25,7 @@ function openDrawer(navigation) {
  */
 export default function TripStack() {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: '#fff',
-      }}
-    >
+    <Stack.Navigator screenOptions={headerScreenOptions}>
       <Stack.Screen
         name="Home"
         component={HomeScreen}
@@ -68,5 +64,5 @@ export default function TripStack() {
 
 const styles = StyleSheet.create({
   menuBtn: { paddingHorizontal: 12, paddingVertical: 4 },
-  menuIcon: { color: '#fff', fontSize: 22, fontWeight: '700' },
+  menuIcon: { color: colors.onPrimary, fontSize: 22, fontWeight: '700' },
 });

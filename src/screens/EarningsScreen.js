@@ -1,10 +1,12 @@
-// AI-assisted: see docs/AI_LOG.md #15
+// AI-assisted: see docs/AI_LOG.md #15, #27
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useEarnings } from '../hooks/useEarnings';
 import { useDriverSession } from '../context/DriverSessionContext';
 import { t } from '../i18n';
 import { colors } from '../theme/colors';
+import { commonStyles } from '../theme/commonStyles';
+import { spacing } from '../theme/tokens';
 
 const PERIODS = [
   { key: 'today', label: 'Hoy' },
@@ -24,13 +26,13 @@ export default function EarningsScreen() {
   const summary = period === 'today' ? today : period === 'week' ? week : month;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* AI-assisted: see docs/AI_LOG.md #15 */}
-      <Text style={styles.title}>{t(lang, 'earningsTitle')}</Text>
+    <ScrollView style={commonStyles.screen} contentContainerStyle={commonStyles.content}>
+      {/* AI-assisted: see docs/AI_LOG.md #15, #27 */}
+      <Text style={commonStyles.title}>{t(lang, 'earningsTitle')}</Text>
 
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Saldo del conductor</Text>
-        <Text style={styles.balanceValue}>${balance.toLocaleString('es-CO')}</Text>
+      <View style={commonStyles.balanceCard}>
+        <Text style={commonStyles.balanceLabel}>Saldo del conductor</Text>
+        <Text style={commonStyles.balanceValue}>${balance.toLocaleString('es-CO')}</Text>
         <Text style={styles.hint}>
           Pasarela − comisiones de efectivo (calculado desde trips)
         </Text>
@@ -40,10 +42,15 @@ export default function EarningsScreen() {
         {PERIODS.map((p) => (
           <Pressable
             key={p.key}
-            style={[styles.tab, period === p.key && styles.tabActive]}
+            style={[styles.tab, period === p.key && commonStyles.chipActive]}
             onPress={() => setPeriod(p.key)}
           >
-            <Text style={[styles.tabText, period === p.key && styles.tabTextActive]}>
+            <Text
+              style={[
+                styles.tabText,
+                period === p.key && styles.tabTextActive,
+              ]}
+            >
               {p.label}
             </Text>
           </Pressable>
@@ -72,27 +79,24 @@ export default function EarningsScreen() {
 
 function Stat({ label, value, highlight }) {
   return (
-    <View style={styles.stat}>
-      <Text style={styles.statLabel}>{label}</Text>
+    <View style={[commonStyles.card, styles.stat]}>
+      <Text style={commonStyles.caption}>{label}</Text>
       <Text style={[styles.statValue, highlight && styles.highlight]}>{value}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, gap: 10 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text, marginBottom: 8 },
-  balanceCard: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
+  hint: {
+    color: colors.textOnPrimaryMuted,
+    fontSize: 12,
+    marginTop: spacing.sm,
   },
-  balanceLabel: { color: '#BCCCDC', fontSize: 13 },
-  balanceValue: { color: '#fff', fontSize: 28, fontWeight: '800', marginTop: 4 },
-  hint: { color: '#9FB3C8', fontSize: 12, marginTop: 6 },
-  tabs: { flexDirection: 'row', gap: 8, marginVertical: 8 },
+  tabs: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginVertical: spacing.sm,
+  },
   tab: {
     flex: 1,
     paddingVertical: 10,
@@ -102,19 +106,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  tabActive: { backgroundColor: colors.accentMuted, borderColor: colors.accent },
   tabText: { color: colors.textMuted, fontWeight: '600' },
   tabTextActive: { color: colors.accent },
   stat: {
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    padding: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.border,
+    alignItems: 'center',
   },
-  statLabel: { color: colors.textMuted },
   statValue: { color: colors.text, fontWeight: '700' },
   highlight: { color: colors.accent },
 });

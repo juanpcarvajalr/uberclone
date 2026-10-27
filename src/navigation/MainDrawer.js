@@ -7,6 +7,7 @@ import TripHistoryScreen from '../screens/TripHistoryScreen';
 import TripDetailScreen from '../screens/TripDetailScreen';
 import ProfileSettingsScreen from '../screens/ProfileSettingsScreen';
 import { colors } from '../theme/colors';
+import { headerScreenOptions } from '../theme/navigationTheme';
 
 const Drawer = createDrawerNavigator();
 
@@ -17,9 +18,10 @@ export default function MainDrawer() {
   return (
     <Drawer.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: '#fff',
+        ...headerScreenOptions,
         drawerActiveTintColor: colors.accent,
+        drawerInactiveTintColor: colors.textMuted,
+        drawerStyle: { backgroundColor: colors.surface },
       }}
     >
       <Drawer.Screen

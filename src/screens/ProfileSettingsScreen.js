@@ -1,9 +1,9 @@
-// AI-assisted: see docs/AI_LOG.md #25, #28
+// AI-assisted: see docs/AI_LOG.md #25, #27, #28
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useDriverSession } from '../context/DriverSessionContext';
 import { t } from '../i18n';
-import { colors } from '../theme/colors';
+import { commonStyles } from '../theme/commonStyles';
 
 /**
  * Profile and settings with mock driver/vehicle data and language toggle.
@@ -34,19 +34,22 @@ export default function ProfileSettingsScreen() {
 
   if (!isAuthenticated) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Sesión cerrada</Text>
-        <Pressable style={styles.primary} onPress={signInMock}>
-          <Text style={styles.primaryText}>Entrar (mock)</Text>
+      <View style={commonStyles.screenPadded}>
+        <Text style={commonStyles.title}>Sesión cerrada</Text>
+        <Pressable
+          style={[commonStyles.primaryButton, { marginTop: 20 }]}
+          onPress={signInMock}
+        >
+          <Text style={commonStyles.primaryButtonText}>Entrar (mock)</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* AI-assisted: see docs/AI_LOG.md #25 */}
-      <Text style={styles.title}>{t(lang, 'profileTitle')}</Text>
+    <ScrollView style={commonStyles.screen} contentContainerStyle={commonStyles.content}>
+      {/* AI-assisted: see docs/AI_LOG.md #25, #27 */}
+      <Text style={commonStyles.title}>{t(lang, 'profileTitle')}</Text>
 
       <Section title="Conductor">
         <Line label="Nombre" value={driver.fullName} />
@@ -67,16 +70,16 @@ export default function ProfileSettingsScreen() {
       </Section>
 
       <Section title={t(lang, 'settingsTitle')}>
-        <Pressable style={styles.secondary} onPress={toggleLanguage}>
-          <Text style={styles.secondaryText}>
+        <Pressable style={commonStyles.secondaryButton} onPress={toggleLanguage}>
+          <Text style={commonStyles.secondaryButtonText}>
             Idioma: {lang === 'es' ? 'Español → English' : 'English → Español'}
           </Text>
         </Pressable>
-        <Pressable style={styles.secondary} onPress={onOpenRegistration}>
-          <Text style={styles.secondaryText}>Probar registro (demo)</Text>
+        <Pressable style={commonStyles.secondaryButton} onPress={onOpenRegistration}>
+          <Text style={commonStyles.secondaryButtonText}>Probar registro (demo)</Text>
         </Pressable>
-        <Pressable style={styles.danger} onPress={onSignOut}>
-          <Text style={styles.primaryText}>{t(lang, 'signOut')}</Text>
+        <Pressable style={commonStyles.dangerButton} onPress={onSignOut}>
+          <Text style={commonStyles.primaryButtonText}>{t(lang, 'signOut')}</Text>
         </Pressable>
       </Section>
     </ScrollView>
@@ -85,8 +88,8 @@ export default function ProfileSettingsScreen() {
 
 function Section({ title, children }) {
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={commonStyles.card}>
+      <Text style={commonStyles.subtitle}>{title}</Text>
       {children}
     </View>
   );
@@ -94,49 +97,16 @@ function Section({ title, children }) {
 
 function Line({ label, value }) {
   return (
-    <View style={styles.line}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value}</Text>
+    <View style={commonStyles.row}>
+      <Text style={commonStyles.caption}>{label}</Text>
+      <Text
+        style={[
+          commonStyles.body,
+          { fontWeight: '600', flexShrink: 1, textAlign: 'right' },
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, gap: 12 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  section: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 8,
-  },
-  sectionTitle: { fontWeight: '700', color: colors.primary, marginBottom: 4 },
-  line: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  label: { color: colors.textMuted },
-  value: { color: colors.text, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
-  secondary: {
-    backgroundColor: colors.accentMuted,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  secondaryText: { color: colors.primary, fontWeight: '600' },
-  danger: {
-    backgroundColor: colors.danger,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  primary: {
-    backgroundColor: colors.primary,
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  primaryText: { color: '#fff', fontWeight: '700' },
-});

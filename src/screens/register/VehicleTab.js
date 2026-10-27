@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #24
+// AI-assisted: see docs/AI_LOG.md #24, #27, #29
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView } from 'react-native';
+import { Text, ScrollView, View } from 'react-native';
 import {
   validatePlate,
   validateBrandOrModel,
@@ -8,7 +8,8 @@ import {
   validateRegistrationDate,
   validatePassengerCapacity,
 } from '../../validation/registerValidators';
-import { colors } from '../../theme/colors';
+import FormField from '../../components/FormField';
+import { commonStyles } from '../../theme/commonStyles';
 
 /**
  * Registration tab: vehicle data.
@@ -31,60 +32,67 @@ export default function VehicleTab({ values, onChange }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      {/* AI-assisted: see docs/AI_LOG.md #24 */}
-      <Field
-        label="Categoría (economy|xl|premium)"
-        value={values.category}
-        onChangeText={(v) => onChange('category', v)}
-        error={errors.category}
-      />
-      <Field
-        label="Placa"
-        value={values.plate}
-        onChangeText={(v) => onChange('plate', v.toUpperCase())}
-        autoCapitalize="characters"
-        error={errors.plate}
-      />
-      <Field
-        label="Marca"
-        value={values.brand}
-        onChangeText={(v) => onChange('brand', v)}
-        error={errors.brand}
-      />
-      <Field
-        label="Modelo"
-        value={values.model}
-        onChangeText={(v) => onChange('model', v)}
-        error={errors.model}
-      />
-      <Field
-        label="Año"
-        value={String(values.year ?? '')}
-        onChangeText={(v) => onChange('year', v)}
-        keyboardType="number-pad"
-        error={errors.year}
-      />
-      <Field
-        label="Fecha de matrícula (AAAA-MM-DD)"
-        value={values.registrationDate}
-        onChangeText={(v) => onChange('registrationDate', v)}
-        error={errors.registrationDate}
-      />
-      <Field
-        label="Color"
-        value={values.color}
-        onChangeText={(v) => onChange('color', v)}
-        error={errors.color}
-      />
-      <Field
-        label="Capacidad de pasajeros"
-        value={String(values.passengerCapacity ?? '')}
-        onChangeText={(v) => onChange('passengerCapacity', v)}
-        keyboardType="number-pad"
-        error={errors.passengerCapacity}
-      />
-      <Text style={styles.hint}>Foto del vehículo: mock URL al enviar</Text>
+    <ScrollView
+      style={commonStyles.screen}
+      contentContainerStyle={commonStyles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* AI-assisted: see docs/AI_LOG.md #24, #29 */}
+      <Text style={commonStyles.title}>Vehículo</Text>
+      <View style={commonStyles.card}>
+        <FormField
+          label="Categoría (economy|xl|premium)"
+          value={values.category}
+          onChangeText={(v) => onChange('category', v)}
+          error={errors.category}
+        />
+        <FormField
+          label="Placa"
+          value={values.plate}
+          onChangeText={(v) => onChange('plate', v.toUpperCase())}
+          autoCapitalize="characters"
+          error={errors.plate}
+        />
+        <FormField
+          label="Marca"
+          value={values.brand}
+          onChangeText={(v) => onChange('brand', v)}
+          error={errors.brand}
+        />
+        <FormField
+          label="Modelo"
+          value={values.model}
+          onChangeText={(v) => onChange('model', v)}
+          error={errors.model}
+        />
+        <FormField
+          label="Año"
+          value={String(values.year ?? '')}
+          onChangeText={(v) => onChange('year', v)}
+          keyboardType="number-pad"
+          error={errors.year}
+        />
+        <FormField
+          label="Fecha de matrícula (AAAA-MM-DD)"
+          value={values.registrationDate}
+          onChangeText={(v) => onChange('registrationDate', v)}
+          error={errors.registrationDate}
+        />
+        <FormField
+          label="Color"
+          value={values.color}
+          onChangeText={(v) => onChange('color', v)}
+          error={errors.color}
+        />
+        <FormField
+          label="Capacidad de pasajeros"
+          value={String(values.passengerCapacity ?? '')}
+          onChangeText={(v) => onChange('passengerCapacity', v)}
+          keyboardType="number-pad"
+          error={errors.passengerCapacity}
+        />
+        <Text style={commonStyles.caption}>Foto del vehículo: mock URL al enviar</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -106,30 +114,3 @@ export function isVehicleTabValid(values) {
     !validatePassengerCapacity(values.category, values.passengerCapacity)
   );
 }
-
-function Field({ label, error, ...inputProps }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} placeholderTextColor={colors.textMuted} {...inputProps} />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  content: { padding: 16, gap: 12 },
-  field: { gap: 4 },
-  label: { color: colors.textMuted, fontSize: 13 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: colors.surface,
-    color: colors.text,
-  },
-  error: { color: colors.danger, fontSize: 12 },
-  hint: { color: colors.textMuted, fontSize: 12 },
-});

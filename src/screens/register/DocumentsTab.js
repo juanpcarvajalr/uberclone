@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #24
+// AI-assisted: see docs/AI_LOG.md #24, #27, #29
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Switch } from 'react-native';
+import { View, Text, ScrollView, Switch } from 'react-native';
 import { format } from 'date-fns';
 import {
   validateDocumentsTab,
@@ -11,7 +11,9 @@ import {
   isTechnicalInspectionRequired,
 } from '../../validation/isTechnicalInspectionRequired';
 import { PRICING } from '../../config/pricing';
+import FormField from '../../components/FormField';
 import { colors } from '../../theme/colors';
+import { commonStyles } from '../../theme/commonStyles';
 
 /**
  * Registration tab: documents and payment email.
@@ -43,61 +45,68 @@ export default function DocumentsTab({ values, registrationDate, onChange }) {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      {/* AI-assisted: see docs/AI_LOG.md #24 */}
-      <Field
-        label="Número de licencia"
-        value={values.licenseNumber}
-        onChangeText={(v) => onChange('licenseNumber', v)}
-        error={errors.licenseNumber}
-      />
-      <Field
-        label="Vencimiento licencia (AAAA-MM-DD)"
-        value={values.licenseExpiresAt}
-        onChangeText={(v) => onChange('licenseExpiresAt', v)}
-        error={errors.licenseExpiry}
-      />
-      <Field
-        label="Vencimiento SOAT (AAAA-MM-DD)"
-        value={values.soatExpiresAt}
-        onChangeText={(v) => onChange('soatExpiresAt', v)}
-        error={errors.soatExpiry}
-      />
-
-      {needsInspection ? (
-        <Field
-          label="Vencimiento revisión técnico-mecánica"
-          value={values.inspectionExpiresAt}
-          onChangeText={(v) => onChange('inspectionExpiresAt', v)}
-          error={errors.inspectionExpiry}
+    <ScrollView
+      style={commonStyles.screen}
+      contentContainerStyle={commonStyles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* AI-assisted: see docs/AI_LOG.md #24, #29 */}
+      <Text style={commonStyles.title}>Documentos y pagos</Text>
+      <View style={commonStyles.card}>
+        <FormField
+          label="Número de licencia"
+          value={values.licenseNumber}
+          onChangeText={(v) => onChange('licenseNumber', v)}
+          error={errors.licenseNumber}
         />
-      ) : (
-        <Text style={styles.info}>
-          Revisión no requerida hasta{' '}
-          {requiredFrom ? format(requiredFrom, 'dd/MM/yyyy') : '—'}
-        </Text>
-      )}
-
-      <Field
-        label="Correo Mercado Pago"
-        value={values.mercadoPagoEmail}
-        onChangeText={(v) => onChange('mercadoPagoEmail', v)}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        error={errors.mercadoPagoEmail || validateEmail(values.mercadoPagoEmail)}
-      />
-
-      <View style={styles.termsRow}>
-        <Switch
-          value={!!values.termsAccepted}
-          onValueChange={(v) => onChange('termsAccepted', v)}
-          trackColor={{ true: colors.accent, false: colors.border }}
+        <FormField
+          label="Vencimiento licencia (AAAA-MM-DD)"
+          value={values.licenseExpiresAt}
+          onChangeText={(v) => onChange('licenseExpiresAt', v)}
+          error={errors.licenseExpiry}
         />
-        <Text style={styles.termsText}>
-          Acepto términos (comisión {PRICING.commissionRate * 100} %)
-        </Text>
+        <FormField
+          label="Vencimiento SOAT (AAAA-MM-DD)"
+          value={values.soatExpiresAt}
+          onChangeText={(v) => onChange('soatExpiresAt', v)}
+          error={errors.soatExpiry}
+        />
+
+        {needsInspection ? (
+          <FormField
+            label="Vencimiento revisión técnico-mecánica"
+            value={values.inspectionExpiresAt}
+            onChangeText={(v) => onChange('inspectionExpiresAt', v)}
+            error={errors.inspectionExpiry}
+          />
+        ) : (
+          <Text style={commonStyles.infoBanner}>
+            Revisión no requerida hasta{' '}
+            {requiredFrom ? format(requiredFrom, 'dd/MM/yyyy') : '—'}
+          </Text>
+        )}
+
+        <FormField
+          label="Correo Mercado Pago"
+          value={values.mercadoPagoEmail}
+          onChangeText={(v) => onChange('mercadoPagoEmail', v)}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          error={errors.mercadoPagoEmail || validateEmail(values.mercadoPagoEmail)}
+        />
+
+        <View style={commonStyles.row}>
+          <Switch
+            value={!!values.termsAccepted}
+            onValueChange={(v) => onChange('termsAccepted', v)}
+            trackColor={{ true: colors.accent, false: colors.border }}
+          />
+          <Text style={[commonStyles.body, { flex: 1 }]}>
+            Acepto términos (comisión {PRICING.commissionRate * 100} %)
+          </Text>
+        </View>
+        {errors.terms ? <Text style={commonStyles.fieldError}>{errors.terms}</Text> : null}
       </View>
-      {errors.terms ? <Text style={styles.error}>{errors.terms}</Text> : null}
     </ScrollView>
   );
 }
@@ -130,37 +139,3 @@ export function isDocumentsTabValid(values, registrationDate) {
   );
   return Object.keys(errors).length === 0;
 }
-
-function Field({ label, error, ...inputProps }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput style={styles.input} placeholderTextColor={colors.textMuted} {...inputProps} />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  content: { padding: 16, gap: 12 },
-  field: { gap: 4 },
-  label: { color: colors.textMuted, fontSize: 13 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: colors.surface,
-    color: colors.text,
-  },
-  error: { color: colors.danger, fontSize: 12 },
-  info: {
-    color: colors.text,
-    backgroundColor: colors.accentMuted,
-    padding: 12,
-    borderRadius: 8,
-  },
-  termsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  termsText: { flex: 1, color: colors.text },
-});

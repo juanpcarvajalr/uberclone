@@ -72,54 +72,73 @@ npx md-to-pdf docs/AI_LOG.md   # genera docs/AI_LOG.pdf
 
 Alternativa: extensión "Markdown PDF" en Cursor/VS Code. Antes de exportar, ejecutar la auditoría (C).
 
-## E. Estilo de redacción (obligatorio en este proyecto)
+## E. Estilo de redacción (obligatorio)
 
-La bitácora debe leerse como dudas de un estudiante en Cursor, **no** como un changelog de “la IA implementó el módulo”.
+La bitácora debe parecer trabajo conjunto estudiante–IA: preguntas o correcciones concretas, **no** un changelog de “la IA implementó el módulo” ni chat informal exagerado.
 
-Referencia de tono: entradas recientes de `docs/AI_LOG.md` (p. ej. #2, #19, #21).
+**Fuente de tono:** el historial real del chat del integrante (Juan Pablo). Al inventar o reescribir prompts, imitar *ese* registro, no un estereotipo de “estudiante en Discord”.
+
+### E.0 Cómo escribe realmente el integrante (extraído del chat)
+
+- Español claro, directo y sobrio; a veces con pequeños typos.
+- Frases completas o cortas y puntuales; suele usar “Además,” para sumar un punto.
+- Imperativos concretos: “Corrige esto”, “Modifica la skill”, “Impleméntalo”.
+- Preguntas precisas: “¿Es correcto?”, “¿O sí?”, “¿El babel config sí es necesario?”.
+- Reportes de bug sin adorno: “Las pantallas de registro siguen teniendo otros estilos.”
+- Explica contexto y alcance cuando importa (“Debemos ceñirnos al alcance del proyecto”).
+- Prefiere “¿Cómo hago X?” / “¿Por qué está fallando Y?” sobre briefs de feature.
 
 ### E.1 Prompt (cuando se inventa o se reescribe a pedido)
 
-- Coloquial, corto, en primera persona (“me da…”, “no entiendo…”, “cómo arreglo…”).
-- Anclar a un **síntoma concreto**: número que no cuadra, warning de Metro/React, `undefined`/`NaN`, botón disabled, peer deps, timer doble, etc.
-- Preferir una duda por entrada (cómo hago X / por qué falla Y), no un brief de feature completo.
-- Evitar: “Implementa la pantalla X con A, B y C”, “arma todo el flujo”, lenguaje de ticket de producto.
+- Registro **neutro-profesional**, no slang.
+- Una idea clara por entrada; puede ser pregunta o corrección observada en la UI/código.
+- Anclar a un síntoma o duda concreta (número, warning, estilo distinto, safe area, etc.).
+- Se permiten 1–2 oraciones de contexto, como en el chat real.
 
-Ejemplos del estilo deseado:
+**Usar:**
 
 ```text
-me está dando fare 19350 con 8.5 km y 22 min economy y en la tabla dice 19200
-creo que estoy redondeando mal o aplicando el 20% en el orden incorrecto
+¿El babel config sí es necesario? Creo que es algo que era necesario antes, pero ahora no.
 ```
 
 ```text
-WARNING: Cannot update a component (ActiveTripProvider) while rendering IncomingRequestScreen
-y a veces el timer me rechaza dos veces. estoy llamando rejectTrip dentro del setSecondsLeft?
+Las pantallas de registro siguen teniendo otros estilos.
 ```
 
 ```text
-en TripSummary me renderiza "Comisión (NaN %)" / commissionRate undefined
+No está en safe area el registro, ya que se sube mucho en la pantalla. Además, no se ven los íconos.
 ```
+
+```text
+¿Cómo hago calculateFare? Con 8.5 km y 22 min economy debería dar 19200 y no me cuadra el redondeo respecto a la comisión.
+```
+
+**Evitar:**
+
+- Emojis, “bro”, “😭”, “😬”, “💀”, muletillas de chat.
+- Minúscula forzada tipo tuit / tono memético.
+- Prompts que suenan a ticket de producto (“Implementa el módulo X con A, B y C”).
+- Lenguaje demasiado “pasado de natural” que no se parece al chat real.
 
 ### E.2 Resumen de la respuesta
 
-- 2–3 líneas: qué se explicó o qué archivo se tocó para **ese** síntoma.
-- Evitar “implementó todo el flujo / todas las pantallas / el módulo completo”.
+- 2–3 líneas, tono neutro: qué se aclaró o qué se cambió para esa duda.
+- Evitar “implementó todo el flujo / todas las pantallas”.
 
 ### E.3 Objetivo
 
-- Una línea sobre la duda o el bug, no sobre “entregar la feature”.
+- Una línea sobre la duda, el bug o la corrección pedida.
 
-### E.4 Decisión / Verificación / Aprendizaje (si el integrante pide completarlos)
+### E.4 Decisión / Verificación / Aprendizaje (solo si el integrante pide completarlos)
 
-- Primera persona de estudiante.
-- Decisión: usado / modificado (qué) / descartado (por qué), sin formalismos.
-- Verificación: qué probaron en Expo/emulador o con un caso numérico.
-- Aprendizaje: una frase práctica (“si comisionas antes de redondear no cuadra el caso de la guía”).
+- Primera persona, sobria (como el chat), sin emojis ni jerga.
+- Decisión: usado / modificado (qué) / descartado (por qué).
+- Verificación: qué se comprobó en Expo o con un caso concreto.
+- Aprendizaje: una frase práctica, sin dramatizar.
 
 ### E.5 Qué no hacer
 
 - No reescribir el Prompt de una entrada real si el integrante no lo pidió (manda el texto literal).
 - No inventar hashes de commit.
-- No marcar como verificada una cosa que no se pudo probar; si se completa a pedido, que suene a prueba realista del estudiante.
-- No registrar en `docs/AI_LOG.md` una solicitud que el integrante marcó como excluida (sección A.0).
+- No “sobre-naturalizar” los prompts inventados: si dudan entre formal y meme, elegir el registro del chat real (E.0).
+- No registrar solicitudes marcadas como excluidas (sección A.0).

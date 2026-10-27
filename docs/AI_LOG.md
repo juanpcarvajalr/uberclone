@@ -412,3 +412,54 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Archivos y commit: `src/screens/ProfileSettingsScreen.js` — Commit: pendiente
 - Verificación: Cambié idioma es↔en y cerré sesión; AsyncStorage no guarda el correo de MP
 - Aprendizaje: Separar lo persistible (idioma/disponibilidad) de lo sensible evita meterme en problemas de la sección de seguridad.
+### Entrada #26
+- Fecha: 2026-10-27
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Ask, modelo: Composer)
+- Objetivo: Entender por qué cada pantalla se ve distinta
+- Prompt:
+  ```text
+  En Home el título se ve de un tamaño y en Ganancias de otro, y los botones tampoco coinciden (unos con borderRadius 8 otros 10).
+  ```
+- Resumen de la respuesta: Sí, cada módulo inventaba tipografía/radios. Propuse tokens (`spacing`, `radii`, `typography`) y ampliar `colors` con `onPrimary` etc.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `src/theme/tokens.js`, ajustes en `src/theme/colors.js`
+  - Decisión del integrante: usado; quiero un solo lugar para el look
+- Archivos y commit: `src/theme/tokens.js`, `src/theme/colors.js` — Commit: pendiente
+- Verificación: Abrí tokens y ya no hay magic numbers sueltos para padding/radius base
+- Aprendizaje: Si el estilo vive copiado en 10 StyleSheets, la app se ve como 10 apps distintas
+
+### Entrada #27
+- Fecha: 2026-10-27
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Reusar card/botón/input en todas las pantallas
+- Prompt:
+  ```text
+  ¿Ahora cómo hago para que el botón primario de Inicio sea el mismo que el de Resumen y el de Enviar registro?
+  ```
+- Resumen de la respuesta: Armó `commonStyles` (screen, card, panel, botones, chips, inputs) y un `FormField` compartido; migró pantallas y tabs de registro para consumirlos.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `commonStyles.js`, `FormField.js` + pantallas/registro
+  - Decisión del integrante: usado; dejé solo estilos locales cuando era layout puntual
+- Archivos y commit: `src/theme/commonStyles.js`, `src/components/FormField.js`, `src/screens/*`, `src/screens/register/*`, `src/navigation/RegisterNavigator.js` — Commit: pendiente
+- Verificación: Igualdad en los estilos
+- Aprendizaje: El tema no sirve si las pantallas no lo usan.
+
+### Entrada #28
+- Fecha: 2026-10-27
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Ask, modelo: Composer)
+- Objetivo: Confirmar que el menú y paneles también siguen el mismo look
+- Prompt:
+  ```text
+  El panel de abajo en Home y el de TripInProgress se veían casi iguales pero no iguales (padding distinto)-
+  ```
+- Resumen de la respuesta: Sí: ambos usan `commonStyles.panel` / botones del tema. El header del stack mantiene el ☰; no hace falta otro estilo paralelo.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: revisión Home + TripInProgress sobre el panel compartido
+  - Decisión del integrante: ok, no pedí más cambios ahí
+- Archivos y commit: `src/screens/HomeScreen.js`, `src/screens/TripInProgressScreen.js` — Commit: pendiente
+- Verificación: Abrí Inicio y Viaje en curso; el sheet inferior se ve del mismo radio/padding
+- Aprendizaje: Unificar no es solo colores: también paneles, gaps y botones outline vs primary
+

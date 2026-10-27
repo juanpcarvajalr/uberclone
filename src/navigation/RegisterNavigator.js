@@ -1,7 +1,9 @@
-// AI-assisted: see docs/AI_LOG.md #18, #24, #28
+// AI-assisted: see docs/AI_LOG.md #18, #24, #27, #29
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import PersonalDataTab, { isPersonalTabValid } from '../screens/register/PersonalDataTab';
 import VehicleTab, { isVehicleTabValid } from '../screens/register/VehicleTab';
 import DocumentsTab, { isDocumentsTabValid } from '../screens/register/DocumentsTab';
@@ -9,8 +11,17 @@ import { useDriverSession } from '../context/DriverSessionContext';
 import { getTechnicalInspectionRequiredFrom } from '../validation/isTechnicalInspectionRequired';
 import { PRICING } from '../config/pricing';
 import { colors } from '../theme/colors';
+import { commonStyles } from '../theme/commonStyles';
+import { registerTabScreenOptions } from '../theme/navigationTheme';
+import { spacing } from '../theme/tokens';
 
 const Tab = createBottomTabNavigator();
+
+const TAB_ICONS = {
+  Personal: 'person-outline',
+  Vehicle: 'car-outline',
+  Documents: 'document-text-outline',
+};
 
 const initialPersonal = {
   fullName: '',
@@ -46,6 +57,7 @@ const initialDocuments = {
  * Registration tabs with shared form state and submit gate.
  */
 export default function RegisterNavigator() {
+  const insets = useSafeAreaInsets();
   const { completeRegistration, signInMock } = useDriverSession();
   const [personal, setPersonal] = useState(initialPersonal);
   const [vehicle, setVehicle] = useState(initialVehicle);
@@ -119,63 +131,94 @@ export default function RegisterNavigator() {
   }, [canSubmit, personal, vehicle, documents, completeRegistration]);
 
   return (
-    <View style={styles.wrapper}>
-      <Tab.Navigator
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: colors.accent,
-          tabBarInactiveTintColor: colors.textMuted,
-        }}
+    <View style={styles.root}>
+      <View
+        style={[
+          styles.header,
+          { paddingTop: Math.max(insets.top, spacing.sm) + spacing.sm },
+        ]}
       >
-        <Tab.Screen name="Personal">
-          {() => <PersonalDataTab values={personal} onChange={onPersonal} />}
-        </Tab.Screen>
-        <Tab.Screen name="Vehicle">
-          {() => <VehicleTab values={vehicle} onChange={onVehicle} />}
-        </Tab.Screen>
-        <Tab.Screen name="Documents">
-          {() => (
-            <DocumentsTab
-              values={documents}
-              registrationDate={vehicle.registrationDate}
-              onChange={onDocuments}
-            />
-          )}
-        </Tab.Screen>
-      </Tab.Navigator>
+        <Text style={styles.headerTitle}>Registro del conductor</Text>
+        <Text style={styles.headerSubtitle}>Completa las tres pestañas para enviar</Text>
+      </View>
 
-      <Pressable
-        style={[styles.submit, !canSubmit && styles.submitDisabled]}
-        onPress={onSubmit}
-        disabled={!canSubmit}
+      <View style={commonStyles.screen}>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            ...registerTabScreenOptions,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons
+                name={TAB_ICONS[route.name] ?? 'ellipse-outline'}
+                size={size ?? 22}
+                color={color}
+              />
+            ),
+          })}
+        >
+          <Tab.Screen name="Personal" options={{ title: 'Datos' }}>
+            {() => <PersonalDataTab values={personal} onChange={onPersonal} />}
+          </Tab.Screen>
+          <Tab.Screen name="Vehicle" options={{ title: 'Vehículo' }}>
+            {() => <VehicleTab values={vehicle} onChange={onVehicle} />}
+          </Tab.Screen>
+          <Tab.Screen name="Documents" options={{ title: 'Documentos' }}>
+            {() => (
+              <DocumentsTab
+                values={documents}
+                registrationDate={vehicle.registrationDate}
+                onChange={onDocuments}
+              />
+            )}
+          </Tab.Screen>
+        </Tab.Navigator>
+      </View>
+
+      <View
+        style={[
+          commonStyles.panel,
+          styles.footer,
+          { paddingBottom: Math.max(insets.bottom, spacing.md) },
+        ]}
       >
-        <Text style={styles.submitText}>Enviar registro</Text>
-      </Pressable>
-      <Pressable style={styles.skip} onPress={signInMock}>
-        <Text style={styles.skipText}>Saltar y usar conductor mock</Text>
-      </Pressable>
+        <Pressable
+          style={[
+            commonStyles.primaryButton,
+            !canSubmit && commonStyles.buttonDisabled,
+          ]}
+          onPress={onSubmit}
+          disabled={!canSubmit}
+        >
+          <Text style={commonStyles.primaryButtonText}>Enviar registro</Text>
+        </Pressable>
+        <Pressable style={commonStyles.outlineButton} onPress={signInMock}>
+          <Text style={commonStyles.outlineButtonText}>Saltar y usar conductor mock</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: colors.background },
-  submit: {
-    marginHorizontal: 12,
-    marginTop: 12,
+  root: {
+    flex: 1,
     backgroundColor: colors.primary,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
   },
-  submitDisabled: { opacity: 0.4 },
-  submitText: { color: '#fff', fontWeight: '700' },
-  skip: {
-    marginHorizontal: 12,
-    marginBottom: 12,
-    marginTop: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
+  header: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.lg,
   },
-  skipText: { color: colors.textMuted, fontWeight: '600' },
+  headerTitle: {
+    color: colors.onPrimary,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  headerSubtitle: {
+    color: colors.textOnPrimaryMuted,
+    marginTop: spacing.xs,
+    fontSize: 13,
+  },
+  footer: {
+    backgroundColor: colors.surface,
+  },
 });

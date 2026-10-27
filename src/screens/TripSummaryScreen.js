@@ -1,11 +1,12 @@
-// AI-assisted: see docs/AI_LOG.md #21
+// AI-assisted: see docs/AI_LOG.md #21, #27
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { useDriverSession } from '../context/DriverSessionContext';
 import { PRICING } from '../config/pricing';
 import { t } from '../i18n';
 import { colors } from '../theme/colors';
+import { commonStyles } from '../theme/commonStyles';
 
 /**
  * Fare summary and mock payment confirmation.
@@ -27,8 +28,8 @@ export default function TripSummaryScreen({ navigation }) {
 
   if (!trip) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.muted}>Sin resumen disponible</Text>
+      <View style={[commonStyles.screenPadded, { justifyContent: 'center' }]}>
+        <Text style={commonStyles.muted}>Sin resumen disponible</Text>
       </View>
     );
   }
@@ -43,11 +44,13 @@ export default function TripSummaryScreen({ navigation }) {
       : 'Pendiente';
 
   return (
-    <View style={styles.container}>
-      {/* AI-assisted: see docs/AI_LOG.md #21 */}
-      <Text style={styles.title}>{t(lang, 'summaryTitle')}</Text>
+    <View style={[commonStyles.screenPadded, { justifyContent: 'center' }]}>
+      {/* AI-assisted: see docs/AI_LOG.md #21, #27 */}
+      <Text style={[commonStyles.title, { textAlign: 'center', marginBottom: 16 }]}>
+        {t(lang, 'summaryTitle')}
+      </Text>
 
-      <View style={styles.card}>
+      <View style={commonStyles.card}>
         <Row label="Tarifa final" value={`$${trip.fare.toLocaleString('es-CO')}`} />
         <Row
           label={`Comisión (${(trip.commissionRate ?? PRICING.commissionRate) * 100} %)`}
@@ -64,16 +67,19 @@ export default function TripSummaryScreen({ navigation }) {
       </View>
 
       {trip.status !== 'paid' ? (
-        <Pressable style={styles.primary} onPress={onConfirmPayment}>
-          <Text style={styles.primaryText}>
+        <Pressable
+          style={[commonStyles.primaryButton, { marginTop: 20 }]}
+          onPress={onConfirmPayment}
+        >
+          <Text style={commonStyles.primaryButtonText}>
             {trip.paymentMethod === 'cash'
               ? 'Marcar efectivo recibido'
               : 'Simular pago aprobado'}
           </Text>
         </Pressable>
       ) : (
-        <Pressable style={styles.primary} onPress={onDone}>
-          <Text style={styles.primaryText}>Volver al inicio</Text>
+        <Pressable style={[commonStyles.primaryButton, { marginTop: 20 }]} onPress={onDone}>
+          <Text style={commonStyles.primaryButtonText}>Volver al inicio</Text>
         </Pressable>
       )}
     </View>
@@ -82,46 +88,17 @@ export default function TripSummaryScreen({ navigation }) {
 
 function Row({ label, value, emphasize }) {
   return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowValue, emphasize && styles.emphasize]}>{value}</Text>
+    <View style={commonStyles.row}>
+      <Text style={commonStyles.caption}>{label}</Text>
+      <Text
+        style={[
+          commonStyles.body,
+          { fontWeight: '600' },
+          emphasize && { color: colors.accent, fontSize: 16 },
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 10,
-  },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  rowLabel: { color: colors.textMuted },
-  rowValue: { color: colors.text, fontWeight: '600' },
-  emphasize: { color: colors.accent, fontSize: 16 },
-  primary: {
-    marginTop: 20,
-    backgroundColor: colors.primary,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  primaryText: { color: '#fff', fontWeight: '700' },
-  muted: { textAlign: 'center', color: colors.textMuted },
-});
