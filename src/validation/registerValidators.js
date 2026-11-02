@@ -89,7 +89,9 @@ export function validateYear(value) {
   const year = Number(value);
   const current = new Date().getFullYear();
   if (!year || String(year).length !== 4) return 'Año inválido';
-  return year <= current ? null : 'El año no puede ser futuro';
+  return year <= current + 1
+    ? null
+    : 'El año del modelo no puede ser mayor a ' + (current + 1);
 }
 
 /**

@@ -9,7 +9,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Necesitamos acceso a tus fotos para el registro del conductor."
+        "NSPhotoLibraryUsageDescription": "Necesitamos acceso a tus fotos para el registro del conductor.",
+        "NSCameraUsageDescription": "Necesitamos la cámara para tomar fotos del registro del conductor."
       }
     },
     "android": {
@@ -20,13 +21,18 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["READ_MEDIA_IMAGES", "READ_EXTERNAL_STORAGE"]
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       [
         "expo-image-picker",
         {
-          "photosPermission": "Necesitamos acceso a tus fotos para el registro del conductor."
+          "photosPermission": "Necesitamos acceso a tus fotos para el registro del conductor.",
+          "cameraPermission": "Necesitamos la cámara para tomar fotos del registro del conductor."
         }
       ]
     ],

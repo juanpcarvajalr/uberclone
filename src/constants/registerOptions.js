@@ -31,7 +31,7 @@ export const COLOR_OPTIONS = [
 export function getYearOptions() {
   const currentYear = new Date().getFullYear();
   const years = [];
-  for (let year = currentYear; year >= currentYear - 30; year -= 1) {
+  for (let year = currentYear + 1; year >= currentYear - 30; year -= 1) {
     years.push({ value: String(year), label: String(year) });
   }
   return years;

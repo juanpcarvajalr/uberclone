@@ -603,3 +603,20 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Archivos y commit: `src/services/cloudinary.js` — Commit: pendiente
 - Verificación: Registrar de nuevo el conductor, y ver la URL correcta en la colección, y que las imágenes se carguen en Cloudinary.
 - Aprendizaje: Se debe obtener la URI local con XHR directamente y luego construir el blob para enviar a Cloudinary.
+
+### Entrada #37
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Permitir tomar fotos con la cámara además de la galería en el registro
+- Prompt:
+  ```text
+  Las fotos también deben poder tomarse con la cámara del celular.
+  ```
+- Resumen de la respuesta: `ImagePickerField` ahora ofrece Galería y Cámara (`launchCameraAsync` + permiso de cámara). Se declaró el permiso en `app.json`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `ImagePickerField.js` y permisos en `app.json`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/components/ImagePickerField.js`, `app.json` — Commit: pendiente
+- Verificación: _pendiente — sugerida: en registro usar Cámara, conceder permiso y ver la preview_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
