@@ -3,42 +3,95 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MOCK_DRIVER, MOCK_VEHICLE, MOCK_DRIVER_LOCATION } from '../mocks/driver';
+import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { auth, db } from '../config/firebaseConfig';
+import { MOCK_DRIVER_LOCATION } from '../mocks/driver';
 
 const DriverSessionContext = createContext(null);
 
 const STORAGE_KEYS = {
-  language: '@uberclone/language',
   isAvailable: '@uberclone/isAvailable',
 };
 
 /**
- * Provides mock driver session state (no Firebase yet).
+ * Provides driver session state backed by Firebase Auth + Firestore.
  * @param {{ children: React.ReactNode }} props
  */
 export function DriverSessionProvider({ children }) {
-  const [driver, setDriver] = useState(MOCK_DRIVER);
-  const [vehicle, setVehicle] = useState(MOCK_VEHICLE);
-  const [isAvailable, setIsAvailable] = useState(MOCK_DRIVER_LOCATION.isAvailable);
+  const [driver, setDriver] = useState(null);
+  const [vehicle, setVehicle] = useState(null);
+  const [isAvailable, setIsAvailable] = useState(false);
   const [location, setLocation] = useState(MOCK_DRIVER_LOCATION.location);
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [hasCompletedRegistration, setHasCompletedRegistration] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [hasCompletedRegistration, setHasCompletedRegistration] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
 
-  const updateLanguage = useCallback(async (language) => {
-    setDriver((prev) => ({ ...prev, language }));
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.language, language);
-    } catch {
-      // ignore persistence errors in mock mode
-    }
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        if (!user) {
+          setIsAuthenticated(false);
+          setHasCompletedRegistration(false);
+          setDriver(null);
+          setVehicle(null);
+          setIsAvailable(false);
+          setAuthReady(true);
+          return;
+        }
+
+        setIsAuthenticated(true);
+        const driverSnap = await getDoc(doc(db, 'drivers', user.uid));
+        if (!driverSnap.exists()) {
+          setHasCompletedRegistration(false);
+          setDriver(null);
+          setVehicle(null);
+          setAuthReady(true);
+          return;
+        }
+
+        const driverData = { uid: user.uid, ...driverSnap.data() };
+        setDriver(driverData);
+        setHasCompletedRegistration(true);
+
+        if (driverData.vehicleId) {
+          const vehicleSnap = await getDoc(doc(db, 'vehicles', driverData.vehicleId));
+          if (vehicleSnap.exists()) {
+            setVehicle({ vehicleId: vehicleSnap.id, ...vehicleSnap.data() });
+          }
+        }
+      } catch {
+        setHasCompletedRegistration(false);
+      } finally {
+        setAuthReady(true);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!driver?.uid) {
+      return undefined;
+    }
+
+    const unsubscribe = onSnapshot(doc(db, 'drivers', driver.uid), (snap) => {
+      if (!snap.exists()) {
+        return;
+      }
+      setDriver((prev) => ({ ...(prev ?? {}), uid: snap.id, ...snap.data() }));
+    });
+
+    return () => unsubscribe();
+  }, [driver?.uid]);
+
   const setAvailability = useCallback(async (next) => {
-    if (driver.accountStatus !== 'approved' && next) {
+    if (driver?.accountStatus !== 'approved' && next) {
       return { ok: false, reason: 'account_not_approved' };
     }
     setIsAvailable(next);
@@ -48,21 +101,30 @@ export function DriverSessionProvider({ children }) {
       // ignore
     }
     return { ok: true };
-  }, [driver.accountStatus]);
+  }, [driver?.accountStatus]);
 
   const updateLocation = useCallback((coords) => {
     setLocation(coords);
   }, []);
 
-  const completeRegistration = useCallback((payload) => {
-    setDriver((prev) => ({ ...prev, ...payload.driver, accountStatus: 'pending' }));
-    setVehicle((prev) => ({ ...prev, ...payload.vehicle }));
+  const applyRegistrationResult = useCallback((result) => {
+    setDriver(result.driver);
+    setVehicle(result.vehicle);
     setHasCompletedRegistration(true);
     setIsAuthenticated(true);
+    setIsAvailable(false);
   }, []);
 
   const signOut = useCallback(async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch {
+      // ignore
+    }
     setIsAuthenticated(false);
+    setHasCompletedRegistration(false);
+    setDriver(null);
+    setVehicle(null);
     setIsAvailable(false);
     try {
       await AsyncStorage.multiRemove([STORAGE_KEYS.isAvailable]);
@@ -71,34 +133,34 @@ export function DriverSessionProvider({ children }) {
     }
   }, []);
 
-  const signInMock = useCallback(() => {
-    setIsAuthenticated(true);
-    setDriver(MOCK_DRIVER);
-    setVehicle(MOCK_VEHICLE);
-    setHasCompletedRegistration(true);
-  }, []);
-
-  const openRegistrationDemo = useCallback(() => {
-    setIsAuthenticated(true);
-    setHasCompletedRegistration(false);
-    setIsAvailable(false);
-  }, []);
-
   const value = useMemo(
     () => ({
-      driver,
-      vehicle,
+      driver: driver ?? {
+        fullName: '',
+        documentNumber: '',
+        phone: '',
+        email: '',
+        accountStatus: 'pending',
+        mercadoPagoEmail: '',
+      },
+      vehicle: vehicle ?? {
+        plate: '',
+        brand: '',
+        model: '',
+        year: 0,
+        category: '',
+        color: '',
+        passengerCapacity: 0,
+      },
       isAvailable,
       location,
       isAuthenticated,
       hasCompletedRegistration,
-      updateLanguage,
+      authReady,
       setAvailability,
       updateLocation,
-      completeRegistration,
+      applyRegistrationResult,
       signOut,
-      signInMock,
-      openRegistrationDemo,
       setHasCompletedRegistration,
     }),
     [
@@ -108,13 +170,11 @@ export function DriverSessionProvider({ children }) {
       location,
       isAuthenticated,
       hasCompletedRegistration,
-      updateLanguage,
+      authReady,
       setAvailability,
       updateLocation,
-      completeRegistration,
+      applyRegistrationResult,
       signOut,
-      signInMock,
-      openRegistrationDemo,
     ]
   );
 

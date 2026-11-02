@@ -458,8 +458,148 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Sí: ambos usan `commonStyles.panel` / botones del tema. El header del stack mantiene el ☰; no hace falta otro estilo paralelo.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: revisión Home + TripInProgress sobre el panel compartido
-  - Decisión del integrante: ok, no pedí más cambios ahí
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/screens/HomeScreen.js`, `src/screens/TripInProgressScreen.js` — Commit: pendiente
 - Verificación: Abrí Inicio y Viaje en curso; el sheet inferior se ve del mismo radio/padding
-- Aprendizaje: Unificar no es solo colores: también paneles, gaps y botones outline vs primary
+- Aprendizaje: Unificar no es solo colores: también paneles, gaps y botones.
 
+### Entrada #29
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Entender y corregir el warning de persistencia de Firebase Auth en React Native
+- Prompt:
+  ```text
+  @\home\juanp\.cursor\projects\home-juanp\terminals\1.txt:292-315  Estoy recibiendo este Warning sobre la Auth de Firebase. ¿Qué pasa?
+  ```
+- Resumen de la respuesta: `getAuth` sin AsyncStorage deja la sesión solo en memoria; al reiniciar la app se pierde. Se cambió a `initializeAuth` con `getReactNativePersistence` (AsyncStorage v2) y `try/catch` por el hot reload.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `src/config/firebaseConfig.js` con persistencia RN
+  - Decisión del integrante: usado tal cual.
+- Archivos y commit: `src/config/firebaseConfig.js` — Commit: pendiente
+- Verificación: En efecto, ya no sale la advertencia.
+- Aprendizaje: Puedo concluir que si no sale la advertencia es porque ahora sí se está almacenando el Auth en AsyncStorage para su persistencia entre reinicios.
+
+### Entrada #30
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Hacer que el ScrollView siga usable al abrir el teclado en el registro
+- Prompt:
+  ```text
+  ¿Por qué el scrollview no funciona cuando abro el teclado en las pantallas? Sé que me falta una propiedad pero no la recuerdo. Ayúdame.
+  ```
+- Resumen de la respuesta: Con el teclado encima no había rango de scroll. Se armó `FormScrollView` (ScrollView de gesture-handler + `paddingBottom` = altura del teclado + `keyboardDismissMode="none"`) y en Android `softwareKeyboardLayoutMode: "pan"`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `FormScrollView`, `useKeyboardHeight`, tabs de registro, `app.json`
+  - Decisión del integrante: Se usó tal cual.
+- Archivos y commit: `src/components/FormScrollView.js`, `src/hooks/useKeyboardHeight.js`, `src/screens/register/PersonalDataTab.js`, `src/screens/register/VehicleTab.js`, `src/screens/register/DocumentsTab.js`, `app.json` — Commit: pendiente
+- Verificación: Hice la prueba y ahora el scroll sí funciona adecuadamente.
+- Aprendizaje: Si el teclado se abría el contenido quedaba estático y no tenía para dónde crecer. Se adicionó el paddingBottom y las propiedades correspondientes.
+
+### Entrada #31
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Evitar errores tipográficos usando selectores en campos del registro
+- Prompt:
+  ```text
+  Quiero que cambies los campos que se puedan usar con selector y no con texto, para evitar fallas.
+  ```
+- Resumen de la respuesta: Se agregaron `SelectField` y `DateField` (modal, sin deps nuevas). En registro: género, fechas, categoría, año, color y capacidad pasan a selector; texto libre solo donde aplica (nombre, documento, placa, etc.).
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: SelectField, DateField, registerOptions y las 3 tabs
+  - Decisión del integrante: Usado tal cual.
+- Archivos y commit: `src/components/SelectField.js`, `src/components/DateField.js`, `src/constants/registerOptions.js`, `src/screens/register/PersonalDataTab.js`, `src/screens/register/VehicleTab.js`, `src/screens/register/DocumentsTab.js` — Commit: pendiente
+- Verificación: Se realiza la verificación de los selectores, para que sea más amigable siendo exitosa.
+- Aprendizaje: Hay campos que no deben ser texto libre. Es recomendado que sean seleccionables para evitar errores humanos.
+
+### Entrada #32
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Diagnosticar error Firebase Auth configuration not found
+- Prompt:
+  ```text
+  Recibí un error que dice que Firebase auth configuration not found.
+  ```
+- Resumen de la respuesta: No es un bug del código: Auth no tiene habilitado Correo/contraseña (o Identity Toolkit) en el proyecto `uberclone-70134`. Hay que activarlo en la consola de Firebase.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: pasos en Authentication → Sign-in method (sin cambio de código)
+  - Decisión del integrante: Realizar la actividad.
+- Archivos y commit: `ninguno` — Commit: pendiente
+- Verificación: Se realizó la configuración exitosa desde la consola de Firebase.
+- Aprendizaje: Para poder permitir el acceso con usuario y contraseña, se debe habilitar la autenticación en la consola de Firebase nativa. Esto facilita el inicio de sesión en las aplicaciones sin código adicional en mi aplicación.
+
+### Entrada #33
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Definir firestore.rules según permisos de la spec antes de escribir el registro
+- Prompt:
+  ```text
+  Antes de probar el registro en Firestore, ¿me ayudas a armar firestore.rules? En la spec el conductor solo puede leer/escribir lo suyo y no debería poder cambiarse accountStatus solo.
+  ```
+- Resumen de la respuesta: Se creó `firestore.rules` con `drivers`, `vehicles`, `driverLocations` y `trips`: dueño autenticado, create de driver con `accountStatus == pending`, update sin alterar ese campo.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: archivo `firestore.rules` alineado a la sección 11
+  - Decisión del integrante: Aprobadas las reglas.
+- Archivos y commit: `firestore.rules` — Commit: pendiente
+- Verificación: Se usaron las reglas en la consola de Firestore.
+- Aprendizaje: Debo limitar la DB, usando reglas de control. La IA teniendo el contexto adecuado, es capaz de entregar las reglas que se adapten. 
+
+
+### Entrada #34
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Subir fotos a Cloudinary en el registro en lugar de guardar URIs file://
+- Prompt:
+  ```text
+  Las URL de las imágenes están quedando en local, por ejemplo:
+
+  "file:///data/user/0/host.exp.exponent/cache/ExperienceData/%2540anonymous%252Fuberclone-455c3d58-42f2-4905-abda-092c57ab8f09/ImagePicker/306dbbdf-4d4a-4160-8a94-9132081bde1f.jpeg"
+
+  No se están almacenando aparentemente en Cloudinary. Además, ayúdame a moverme en Cloudinary para encontrar las imágenes una vez sean subidas.
+  ```
+- Resumen de la respuesta: `registerDriver` guardaba la URI local. Ahora sube con `uploadImage` antes del `writeBatch` y guarda `secure_url`. En Cloudinary: Media Library → carpeta `uberclone/drivers/{uid}/…`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: subir fotos en `registerDriver.js` usando `cloudinary.js`
+  - Decisión del integrante: Realizar pruebas y modificar si es necesario.
+- Archivos y commit: `src/services/registerDriver.js`, `src/services/cloudinary.js` — Commit: pendiente
+- Verificación: Registrar de nuevo el conductor, y ver la URL correcta en la colección, y que las imágenes se carguen en Cloudinary.
+- Aprendizaje: Se estaba usando la URI local de las imágenes. Se debe ejecutar la lógica de Cloudinary.
+
+### Entrada #35
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Corregir error Unsupported FormDataPart al subir a Cloudinary
+- Prompt:
+  ```text
+  Estoy recibiendo Unsupported FormDataPart implementation. ¿Qué está pasando?
+  ```
+- Resumen de la respuesta: En RN nuevo, `FormData.append('file', { uri, name, type })` falla. Se convierte la URI a `Blob` con `fetch` y luego se hace append del blob.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: ajuste en `src/services/cloudinary.js`
+  - Decisión del integrante: Aceptar y realizar pruebas.
+- Archivos y commit: `src/services/cloudinary.js` — Commit: pendiente
+- Verificación: Registrar de nuevo el conductor, y ver la URL correcta en la colección, y que las imágenes se carguen en Cloudinary.
+- Aprendizaje: Al hacer append con esta versión de React Native, es requerido obtener un Blob a partir de la URI local. (Debe ser binario)
+
+### Entrada #36
+- Fecha: 2026-11-02
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Corregir lectura de URI local al subir imágenes a Cloudinary
+- Prompt:
+  ```text
+  Ahora estoy recibiendo No se pudo leer la imagen local.
+  ```
+- Resumen de la respuesta: `fetch(file://…)` falla en RN/Expo. Se lee la imagen con `XMLHttpRequest` (`responseType: 'blob'`) y luego se sube a Cloudinary.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `src/services/cloudinary.js` con XHR
+  - Decisión del integrante: Aceptar y probar.
+- Archivos y commit: `src/services/cloudinary.js` — Commit: pendiente
+- Verificación: Registrar de nuevo el conductor, y ver la URL correcta en la colección, y que las imágenes se carguen en Cloudinary.
+- Aprendizaje: Se debe obtener la URI local con XHR directamente y luego construir el blob para enviar a Cloudinary.

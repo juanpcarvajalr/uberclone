@@ -7,7 +7,6 @@ export const MOCK_DRIVER = {
   birthDate: '1994-05-12T00:00:00.000Z',
   gender: 'male',
   email: 'carlos.mejia@example.com',
-  language: 'es',
   profilePhotoUrl: 'https://placehold.co/120x120/png',
   vehicleId: 'vehicle_mock_001',
   accountStatus: 'approved',

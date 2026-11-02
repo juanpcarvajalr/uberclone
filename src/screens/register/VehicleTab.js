@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #24, #27, #29
-import React from 'react';
-import { Text, ScrollView, View } from 'react-native';
+// AI-assisted: see docs/AI_LOG.md #24, #27, #29, #30, #31
+import React, { useMemo } from 'react';
+import { Text, View } from 'react-native';
 import {
   validatePlate,
   validateBrandOrModel,
@@ -9,6 +9,16 @@ import {
   validatePassengerCapacity,
 } from '../../validation/registerValidators';
 import FormField from '../../components/FormField';
+import FormScrollView from '../../components/FormScrollView';
+import ImagePickerField from '../../components/ImagePickerField';
+import SelectField from '../../components/SelectField';
+import DateField from '../../components/DateField';
+import {
+  CATEGORY_OPTIONS,
+  COLOR_OPTIONS,
+  getCapacityOptions,
+  getYearOptions,
+} from '../../constants/registerOptions';
 import { commonStyles } from '../../theme/commonStyles';
 
 /**
@@ -17,6 +27,12 @@ import { commonStyles } from '../../theme/commonStyles';
  */
 export default function VehicleTab({ values, onChange }) {
   const year = Number(values.year) || new Date().getFullYear();
+  const yearOptions = useMemo(() => getYearOptions(), []);
+  const capacityOptions = useMemo(
+    () => getCapacityOptions(values.category),
+    [values.category]
+  );
+
   const errors = {
     category: !(values.category ?? '').trim() ? 'Categoría obligatoria' : null,
     plate: validatePlate(values.plate),
@@ -29,21 +45,29 @@ export default function VehicleTab({ values, onChange }) {
       values.category,
       values.passengerCapacity
     ),
+    vehiclePhotoUri: !values.vehiclePhotoUri ? 'La foto del vehículo es obligatoria' : null,
+  };
+
+  const onCategoryChange = (category) => {
+    onChange('category', category);
+    if (category === 'xl' && Number(values.passengerCapacity) < 6) {
+      onChange('passengerCapacity', '6');
+    }
   };
 
   return (
-    <ScrollView
+    <FormScrollView
       style={commonStyles.screen}
       contentContainerStyle={commonStyles.content}
-      keyboardShouldPersistTaps="handled"
     >
-      {/* AI-assisted: see docs/AI_LOG.md #24, #29 */}
+      {/* AI-assisted: see docs/AI_LOG.md #24, #29, #30, #31 */}
       <Text style={commonStyles.title}>Vehículo</Text>
       <View style={commonStyles.card}>
-        <FormField
-          label="Categoría (economy|xl|premium)"
+        <SelectField
+          label="Categoría"
           value={values.category}
-          onChangeText={(v) => onChange('category', v)}
+          options={CATEGORY_OPTIONS}
+          onChange={onCategoryChange}
           error={errors.category}
         />
         <FormField
@@ -65,35 +89,43 @@ export default function VehicleTab({ values, onChange }) {
           onChangeText={(v) => onChange('model', v)}
           error={errors.model}
         />
-        <FormField
+        <SelectField
           label="Año"
           value={String(values.year ?? '')}
-          onChangeText={(v) => onChange('year', v)}
-          keyboardType="number-pad"
+          options={yearOptions}
+          onChange={(v) => onChange('year', v)}
           error={errors.year}
         />
-        <FormField
-          label="Fecha de matrícula (AAAA-MM-DD)"
+        <DateField
+          label="Fecha de matrícula"
           value={values.registrationDate}
-          onChangeText={(v) => onChange('registrationDate', v)}
+          onChange={(v) => onChange('registrationDate', v)}
           error={errors.registrationDate}
+          minimumYear={year - 1}
+          maximumYear={new Date().getFullYear()}
         />
-        <FormField
+        <SelectField
           label="Color"
           value={values.color}
-          onChangeText={(v) => onChange('color', v)}
+          options={COLOR_OPTIONS}
+          onChange={(v) => onChange('color', v)}
           error={errors.color}
         />
-        <FormField
+        <SelectField
           label="Capacidad de pasajeros"
           value={String(values.passengerCapacity ?? '')}
-          onChangeText={(v) => onChange('passengerCapacity', v)}
-          keyboardType="number-pad"
+          options={capacityOptions}
+          onChange={(v) => onChange('passengerCapacity', v)}
           error={errors.passengerCapacity}
         />
-        <Text style={commonStyles.caption}>Foto del vehículo: mock URL al enviar</Text>
+        <ImagePickerField
+          label="Foto del vehículo (Debe ser legible la placa)"
+          value={values.vehiclePhotoUri}
+          onChange={(uri) => onChange('vehiclePhotoUri', uri)}
+          error={errors.vehiclePhotoUri}
+        />
       </View>
-    </ScrollView>
+    </FormScrollView>
   );
 }
 
@@ -111,6 +143,7 @@ export function isVehicleTabValid(values) {
     !validateYear(values.year) &&
     !validateRegistrationDate(values.registrationDate, year) &&
     !!(values.color ?? '').trim() &&
-    !validatePassengerCapacity(values.category, values.passengerCapacity)
+    !validatePassengerCapacity(values.category, values.passengerCapacity) &&
+    !!values.vehiclePhotoUri
   );
 }

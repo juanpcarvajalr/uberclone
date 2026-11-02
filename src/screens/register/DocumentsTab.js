@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #24, #27, #29
+// AI-assisted: see docs/AI_LOG.md #24, #27, #29, #30, #31
 import React from 'react';
-import { View, Text, ScrollView, Switch } from 'react-native';
+import { View, Text, Switch } from 'react-native';
 import { format } from 'date-fns';
 import {
   validateDocumentsTab,
@@ -12,8 +12,37 @@ import {
 } from '../../validation/isTechnicalInspectionRequired';
 import { PRICING } from '../../config/pricing';
 import FormField from '../../components/FormField';
+import FormScrollView from '../../components/FormScrollView';
+import ImagePickerField from '../../components/ImagePickerField';
+import DateField from '../../components/DateField';
 import { colors } from '../../theme/colors';
 import { commonStyles } from '../../theme/commonStyles';
+
+/**
+ * Builds the documents payload used by validators.
+ * @param {object} values
+ * @param {boolean} needsInspection
+ * @returns {object}
+ */
+function buildDocumentsPayload(values, needsInspection) {
+  return {
+    driverLicense: {
+      number: values.licenseNumber,
+      photoUrl: values.licensePhotoUri,
+      expiresAt: values.licenseExpiresAt,
+    },
+    soat: {
+      photoUrl: values.soatPhotoUri,
+      expiresAt: values.soatExpiresAt,
+    },
+    technicalInspection: {
+      photoUrl: needsInspection ? values.inspectionPhotoUri : undefined,
+      expiresAt: values.inspectionExpiresAt,
+    },
+    mercadoPagoEmail: values.mercadoPagoEmail,
+    termsAccepted: values.termsAccepted,
+  };
+}
 
 /**
  * Registration tab: documents and payment email.
@@ -27,58 +56,71 @@ export default function DocumentsTab({ values, registrationDate, onChange }) {
     ? getTechnicalInspectionRequiredFrom(registrationDate)
     : null;
   const errors = validateDocumentsTab(
-    {
-      driverLicense: {
-        number: values.licenseNumber,
-        photoUrl: 'mock',
-        expiresAt: values.licenseExpiresAt,
-      },
-      soat: { photoUrl: 'mock', expiresAt: values.soatExpiresAt },
-      technicalInspection: {
-        photoUrl: needsInspection ? 'mock' : undefined,
-        expiresAt: values.inspectionExpiresAt,
-      },
-      mercadoPagoEmail: values.mercadoPagoEmail,
-      termsAccepted: values.termsAccepted,
-    },
+    buildDocumentsPayload(values, needsInspection),
     registrationDate || new Date().toISOString()
   );
+  const currentYear = new Date().getFullYear();
 
   return (
-    <ScrollView
+    <FormScrollView
       style={commonStyles.screen}
       contentContainerStyle={commonStyles.content}
-      keyboardShouldPersistTaps="handled"
     >
-      {/* AI-assisted: see docs/AI_LOG.md #24, #29 */}
+      {/* AI-assisted: see docs/AI_LOG.md #24, #29, #30, #31 */}
       <Text style={commonStyles.title}>Documentos y pagos</Text>
       <View style={commonStyles.card}>
         <FormField
-          label="Número de licencia"
+          label="Número de licencia de conducción"
           value={values.licenseNumber}
           onChangeText={(v) => onChange('licenseNumber', v)}
           error={errors.licenseNumber}
         />
-        <FormField
-          label="Vencimiento licencia (AAAA-MM-DD)"
-          value={values.licenseExpiresAt}
-          onChangeText={(v) => onChange('licenseExpiresAt', v)}
-          error={errors.licenseExpiry}
+        <ImagePickerField
+          label="Foto de licencia de conducción"
+          value={values.licensePhotoUri}
+          onChange={(uri) => onChange('licensePhotoUri', uri)}
+          error={errors.licensePhoto}
         />
-        <FormField
-          label="Vencimiento SOAT (AAAA-MM-DD)"
+        <DateField
+          label="Vencimiento licencia de conducción"
+          value={values.licenseExpiresAt}
+          onChange={(v) => onChange('licenseExpiresAt', v)}
+          error={errors.licenseExpiry}
+          minimumYear={currentYear}
+          maximumYear={currentYear + 15}
+        />
+        <ImagePickerField
+          label="Foto de SOAT"
+          value={values.soatPhotoUri}
+          onChange={(uri) => onChange('soatPhotoUri', uri)}
+          error={errors.soatPhoto}
+        />
+        <DateField
+          label="Vencimiento SOAT"
           value={values.soatExpiresAt}
-          onChangeText={(v) => onChange('soatExpiresAt', v)}
+          onChange={(v) => onChange('soatExpiresAt', v)}
           error={errors.soatExpiry}
+          minimumYear={currentYear}
+          maximumYear={currentYear + 5}
         />
 
         {needsInspection ? (
-          <FormField
-            label="Vencimiento revisión técnico-mecánica"
-            value={values.inspectionExpiresAt}
-            onChangeText={(v) => onChange('inspectionExpiresAt', v)}
-            error={errors.inspectionExpiry}
-          />
+          <>
+            <ImagePickerField
+              label="Foto revisión técnico-mecánica"
+              value={values.inspectionPhotoUri}
+              onChange={(uri) => onChange('inspectionPhotoUri', uri)}
+              error={errors.inspectionPhoto}
+            />
+            <DateField
+              label="Vencimiento revisión técnico-mecánica"
+              value={values.inspectionExpiresAt}
+              onChange={(v) => onChange('inspectionExpiresAt', v)}
+              error={errors.inspectionExpiry}
+              minimumYear={currentYear}
+              maximumYear={currentYear + 5}
+            />
+          </>
         ) : (
           <Text style={commonStyles.infoBanner}>
             Revisión no requerida hasta{' '}
@@ -107,7 +149,7 @@ export default function DocumentsTab({ values, registrationDate, onChange }) {
         </View>
         {errors.terms ? <Text style={commonStyles.fieldError}>{errors.terms}</Text> : null}
       </View>
-    </ScrollView>
+    </FormScrollView>
   );
 }
 
@@ -121,20 +163,7 @@ export function isDocumentsTabValid(values, registrationDate) {
     ? isTechnicalInspectionRequired(registrationDate)
     : false;
   const errors = validateDocumentsTab(
-    {
-      driverLicense: {
-        number: values.licenseNumber,
-        photoUrl: 'mock',
-        expiresAt: values.licenseExpiresAt,
-      },
-      soat: { photoUrl: 'mock', expiresAt: values.soatExpiresAt },
-      technicalInspection: {
-        photoUrl: needsInspection ? 'mock' : undefined,
-        expiresAt: values.inspectionExpiresAt,
-      },
-      mercadoPagoEmail: values.mercadoPagoEmail,
-      termsAccepted: values.termsAccepted,
-    },
+    buildDocumentsPayload(values, needsInspection),
     registrationDate || new Date().toISOString()
   );
   return Object.keys(errors).length === 0;

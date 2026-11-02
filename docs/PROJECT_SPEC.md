@@ -10,7 +10,7 @@
 1. Leer este archivo antes de proponer arquitectura, pantallas o modelos de datos.
 2. No inventar requisitos: si algo no está aquí ni en el enunciado, preguntar al integrante.
 3. Toda interacción con IA se registra en `docs/AI_LOG.md` siguiendo `.cursor/rules/10-bitacora-ia.mdc`.
-4. Nombres de código, campos de base de datos y comentarios de código **en inglés**; textos de UI en español/inglés (i18n).
+4. Nombres de código, campos de base de datos y comentarios de código **en inglés**; textos de UI **en español** (sin i18n).
 5. Respetar las reglas de seguridad de la sección 9 sin excepciones.
 
 ---
@@ -26,7 +26,7 @@ Aplicación móvil multiplataforma (iOS y Android), versión **conductor** de un
 - cobra con Mercado Pago (recomendado), Stripe (solo modo prueba) o efectivo;
 - consulta tarifa, comisión (20 %), ganancia neta, historial y saldo.
 
-Existe una app de **pasajero** que comparte categorías, idioma y la función `calculateFare`.
+Existe una app de **pasajero** que comparte categorías y la función `calculateFare`.
 
 ---
 
@@ -42,7 +42,7 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 | Tiempo real | Firestore `onSnapshot` | |
 | Notificaciones | Firebase Cloud Messaging (`@react-native-firebase/messaging`) | Solicitudes con app en segundo plano |
 | Estado global | React Context (`useContext` + `useReducer`) | Sesión del conductor y viaje activo (sección 8) |
-| Persistencia local | AsyncStorage | **Solo** idioma, sesión y último estado de disponibilidad |
+| Persistencia local | AsyncStorage | **Solo** sesión y último estado de disponibilidad |
 | Imágenes | Cloudinary (plan gratuito) | Firebase Storage puede exigir plan Blaze |
 | Backend de pagos | Node.js/Express | |
 | Pagos | Mercado Pago Checkout Pro (`react-native-webview` o navegador) | Solo credenciales de prueba |
@@ -75,8 +75,7 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 │  │  ├─ TripDetailScreen.js
 │  │  └─ ProfileSettingsScreen.js
 │  ├─ services/                    # firestore, payments, maps, cloudinary
-│  ├─ validation/                  # Validadores puros del registro
-│  └─ i18n/                        # es, en
+│  └─ validation/                  # Validadores puros del registro
 ├─ backend/                        # Express (pagos y webhooks)
 │  └─ .env.example
 ├─ docs/
@@ -118,7 +117,6 @@ Existe una app de **pasajero** que comparte categorías, idioma y la función `c
 | Fecha de nacimiento | Selector de fecha; edad ≥ 18 años cumplidos |
 | Género | Lista desplegable |
 | Correo electrónico | Debe tener `@` y dominio válido |
-| Idioma | Español / inglés (mismo selector que la app del pasajero) |
 
 ### Pestaña 2 — Vehículo
 
@@ -180,7 +178,7 @@ isTechnicalInspectionRequired(registrationDate, today = new Date())
 4. **Cobro y resumen:** tarifa final, comisión, ganancia neta y estado del pago (Aprobado, Pendiente, Rechazado, Efectivo).
 5. **Ganancias:** ver sección 10.
 6. **Historial:** ver sección 11.
-7. **Perfil y configuración:** datos editables, vehículo, documentos, idioma, cerrar sesión.
+7. **Perfil y configuración:** datos editables, vehículo, documentos, cerrar sesión.
 
 ---
 
@@ -214,7 +212,7 @@ Centralizar las transiciones en una función pura `canTransition(from, to)`, usa
 | `useMemo` | Totales de ganancias |
 | `useCallback` | Manejadores de aceptar y rechazar |
 | Personalizados (mínimo) | `useDriverLocation`, `useTripRequests`, `useEarnings` |
-| AsyncStorage | Solo preferencias y sesión (idioma, último estado de disponibilidad) |
+| AsyncStorage | Solo sesión y último estado de disponibilidad |
 
 ### Estado global con React Context
 
@@ -339,7 +337,6 @@ Estas reglas se implementan en `firestore.rules`. El `uid` es el de Firebase Aut
 | `birthDate` | timestamp | Mayor de 18 años |
 | `gender` | string | Valor de la lista |
 | `email` | string | Correo del conductor |
-| `language` | string | `es`, `en` |
 | `profilePhotoUrl` | string | URL de Cloudinary |
 | `vehicleId` | string | Referencia a `vehicles` |
 | `accountStatus` | string | `pending`, `approved`, `rejected` |

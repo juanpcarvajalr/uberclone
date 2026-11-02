@@ -2,8 +2,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
-import { useDriverSession } from '../context/DriverSessionContext';
-import { t } from '../i18n';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 import { spacing } from '../theme/tokens';
@@ -15,8 +13,6 @@ const COUNTDOWN_SECONDS = 15;
  */
 export default function IncomingRequestScreen({ navigation }) {
   const { trip, acceptTrip, rejectTrip } = useActiveTrip();
-  const { driver } = useDriverSession();
-  const lang = driver.language ?? 'es';
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
   const expireAllowedRef = useRef(false);
 
@@ -77,7 +73,7 @@ export default function IncomingRequestScreen({ navigation }) {
   return (
     <View style={[commonStyles.screenPadded, styles.centered]}>
       {/* AI-assisted: see docs/AI_LOG.md #19, #27 */}
-      <Text style={[commonStyles.title, styles.centerText]}>{t(lang, 'incomingTitle')}</Text>
+      <Text style={[commonStyles.title, styles.centerText]}>Solicitud entrante</Text>
       <Text style={commonStyles.timer}>{secondsLeft}s</Text>
 
       <View style={commonStyles.card}>
@@ -99,10 +95,10 @@ export default function IncomingRequestScreen({ navigation }) {
 
       <View style={styles.actions}>
         <Pressable style={[styles.actionBtn, commonStyles.dangerButton]} onPress={onReject}>
-          <Text style={commonStyles.primaryButtonText}>{t(lang, 'reject')}</Text>
+          <Text style={commonStyles.primaryButtonText}>Rechazar</Text>
         </Pressable>
         <Pressable style={[styles.actionBtn, commonStyles.accentButton]} onPress={onAccept}>
-          <Text style={commonStyles.primaryButtonText}>{t(lang, 'accept')}</Text>
+          <Text style={commonStyles.primaryButtonText}>Aceptar</Text>
         </Pressable>
       </View>
     </View>

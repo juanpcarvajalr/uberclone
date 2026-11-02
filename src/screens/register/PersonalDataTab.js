@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #24, #27, #29
+// AI-assisted: see docs/AI_LOG.md #24, #27, #29, #30, #31
 import React from 'react';
-import { Text, ScrollView, View } from 'react-native';
+import { Text, View } from 'react-native';
 import {
   validateFullName,
   validateDocumentNumber,
@@ -9,6 +9,11 @@ import {
   validateBirthDate,
 } from '../../validation/registerValidators';
 import FormField from '../../components/FormField';
+import FormScrollView from '../../components/FormScrollView';
+import ImagePickerField from '../../components/ImagePickerField';
+import SelectField from '../../components/SelectField';
+import DateField from '../../components/DateField';
+import { GENDER_OPTIONS } from '../../constants/registerOptions';
 import { commonStyles } from '../../theme/commonStyles';
 
 /**
@@ -23,17 +28,30 @@ export default function PersonalDataTab({ values, onChange }) {
     email: validateEmail(values.email),
     birthDate: validateBirthDate(values.birthDate),
     gender: !(values.gender ?? '').trim() ? 'El género es obligatorio' : null,
+    password: !(values.password ?? '').trim()
+      ? 'La contraseña es obligatoria'
+      : (values.password ?? '').length < 6
+        ? 'Mínimo 6 caracteres'
+        : null,
+    profilePhotoUri: !values.profilePhotoUri ? 'La foto de perfil es obligatoria' : null,
   };
 
+  const currentYear = new Date().getFullYear();
+
   return (
-    <ScrollView
+    <FormScrollView
       style={commonStyles.screen}
       contentContainerStyle={commonStyles.content}
-      keyboardShouldPersistTaps="handled"
     >
-      {/* AI-assisted: see docs/AI_LOG.md #24, #29 */}
+      {/* AI-assisted: see docs/AI_LOG.md #24, #29, #30, #31 */}
       <Text style={commonStyles.title}>Datos personales</Text>
       <View style={commonStyles.card}>
+        <ImagePickerField
+          label="Foto de perfil"
+          value={values.profilePhotoUri}
+          onChange={(uri) => onChange('profilePhotoUri', uri)}
+          error={errors.profilePhotoUri}
+        />
         <FormField
           label="Nombre completo"
           value={values.fullName}
@@ -54,17 +72,19 @@ export default function PersonalDataTab({ values, onChange }) {
           keyboardType="number-pad"
           error={errors.phone}
         />
-        <FormField
-          label="Fecha de nacimiento (AAAA-MM-DD)"
+        <DateField
+          label="Fecha de nacimiento"
           value={values.birthDate}
-          onChangeText={(v) => onChange('birthDate', v)}
+          onChange={(v) => onChange('birthDate', v)}
           error={errors.birthDate}
+          minimumYear={currentYear - 90}
+          maximumYear={currentYear - 18}
         />
-        <FormField
+        <SelectField
           label="Género"
           value={values.gender}
-          onChangeText={(v) => onChange('gender', v)}
-          placeholder="male | female | other"
+          options={GENDER_OPTIONS}
+          onChange={(v) => onChange('gender', v)}
           error={errors.gender}
         />
         <FormField
@@ -76,14 +96,15 @@ export default function PersonalDataTab({ values, onChange }) {
           error={errors.email}
         />
         <FormField
-          label="Idioma (es/en)"
-          value={values.language}
-          onChangeText={(v) => onChange('language', v)}
-          error={null}
+          label="Contraseña"
+          value={values.password}
+          onChangeText={(v) => onChange('password', v)}
+          secureTextEntry
+          autoCapitalize="none"
+          error={errors.password}
         />
-        <Text style={commonStyles.caption}>Foto de perfil: mock URL se usará al enviar</Text>
       </View>
-    </ScrollView>
+    </FormScrollView>
   );
 }
 
@@ -99,6 +120,8 @@ export function isPersonalTabValid(values) {
     !validatePhone(values.phone) &&
     !validateEmail(values.email) &&
     !validateBirthDate(values.birthDate) &&
-    !!(values.gender ?? '').trim()
+    !!(values.gender ?? '').trim() &&
+    (values.password ?? '').length >= 6 &&
+    !!values.profilePhotoUri
   );
 }

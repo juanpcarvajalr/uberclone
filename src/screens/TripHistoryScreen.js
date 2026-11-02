@@ -3,8 +3,6 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { parseISO, isSameDay, isSameWeek, isSameMonth, format } from 'date-fns';
 import { MOCK_TRIPS } from '../mocks/trips';
-import { useDriverSession } from '../context/DriverSessionContext';
-import { t } from '../i18n';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 import { spacing } from '../theme/tokens';
@@ -27,8 +25,6 @@ const PAYMENT_FILTERS = [
  * Trip history FlatList with period and payment filters (mock data).
  */
 export default function TripHistoryScreen({ navigation }) {
-  const { driver } = useDriverSession();
-  const lang = driver.language ?? 'es';
   const [period, setPeriod] = useState('all');
   const [paymentMethod, setPaymentMethod] = useState(null);
 
@@ -63,7 +59,7 @@ export default function TripHistoryScreen({ navigation }) {
   return (
     <View style={[commonStyles.screen, styles.topPad]}>
       {/* AI-assisted: see docs/AI_LOG.md #22, #27 */}
-      <Text style={[commonStyles.title, styles.titlePad]}>{t(lang, 'historyTitle')}</Text>
+      <Text style={[commonStyles.title, styles.titlePad]}>Historial</Text>
 
       <View style={styles.filters}>
         {FILTERS.map((f) => (
@@ -94,7 +90,7 @@ export default function TripHistoryScreen({ navigation }) {
         keyExtractor={(item) => item.tripId}
         contentContainerStyle={data.length === 0 ? styles.emptyContainer : styles.list}
         ListEmptyComponent={
-          <Text style={commonStyles.muted}>{t(lang, 'emptyHistory')}</Text>
+          <Text style={commonStyles.muted}>No hay viajes en este periodo</Text>
         }
         renderItem={({ item }) => (
           <Pressable

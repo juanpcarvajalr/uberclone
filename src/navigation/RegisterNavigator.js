@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #18, #24, #27, #29
+// AI-assisted: see docs/AI_LOG.md #18, #24, #27, #29, #30
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,8 +8,7 @@ import PersonalDataTab, { isPersonalTabValid } from '../screens/register/Persona
 import VehicleTab, { isVehicleTabValid } from '../screens/register/VehicleTab';
 import DocumentsTab, { isDocumentsTabValid } from '../screens/register/DocumentsTab';
 import { useDriverSession } from '../context/DriverSessionContext';
-import { getTechnicalInspectionRequiredFrom } from '../validation/isTechnicalInspectionRequired';
-import { PRICING } from '../config/pricing';
+import { registerDriver } from '../services/registerDriver';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 import { registerTabScreenOptions } from '../theme/navigationTheme';
@@ -30,7 +29,8 @@ const initialPersonal = {
   birthDate: '1995-01-15',
   gender: '',
   email: '',
-  language: 'es',
+  password: '',
+  profilePhotoUri: null,
 };
 
 const initialVehicle = {
@@ -42,6 +42,7 @@ const initialVehicle = {
   registrationDate: '2023-02-10',
   color: '',
   passengerCapacity: '4',
+  vehiclePhotoUri: null,
 };
 
 const initialDocuments = {
@@ -51,17 +52,22 @@ const initialDocuments = {
   inspectionExpiresAt: '2027-06-01',
   mercadoPagoEmail: '',
   termsAccepted: false,
+  licensePhotoUri: null,
+  soatPhotoUri: null,
+  inspectionPhotoUri: null,
 };
 
 /**
- * Registration tabs with shared form state and submit gate.
+ * Registration tabs with shared form state and Firebase submit.
  */
 export default function RegisterNavigator() {
   const insets = useSafeAreaInsets();
-  const { completeRegistration, signInMock } = useDriverSession();
+  const { applyRegistrationResult } = useDriverSession();
   const [personal, setPersonal] = useState(initialPersonal);
   const [vehicle, setVehicle] = useState(initialVehicle);
   const [documents, setDocuments] = useState(initialDocuments);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const onPersonal = useCallback((key, value) => {
     setPersonal((prev) => ({ ...prev, [key]: value }));
@@ -83,55 +89,27 @@ export default function RegisterNavigator() {
     [personal, vehicle, documents]
   );
 
-  const onSubmit = useCallback(() => {
-    if (!canSubmit) return;
-    const requiredFrom = getTechnicalInspectionRequiredFrom(vehicle.registrationDate);
-    completeRegistration({
-      driver: {
-        fullName: personal.fullName.trim(),
-        documentNumber: personal.documentNumber.trim(),
-        phone: personal.phone.trim(),
-        birthDate: new Date(personal.birthDate).toISOString(),
-        gender: personal.gender.trim(),
-        email: personal.email.trim(),
-        language: personal.language === 'en' ? 'en' : 'es',
-        profilePhotoUrl: 'https://placehold.co/120x120/png',
-        mercadoPagoEmail: documents.mercadoPagoEmail.trim(),
-        termsAcceptedAt: new Date().toISOString(),
-        termsCommissionRate: PRICING.commissionRate,
-        documents: {
-          driverLicense: {
-            number: documents.licenseNumber.trim(),
-            photoUrl: 'https://placehold.co/200x120/png',
-            expiresAt: new Date(documents.licenseExpiresAt).toISOString(),
-          },
-          soat: {
-            photoUrl: 'https://placehold.co/200x120/png',
-            expiresAt: new Date(documents.soatExpiresAt).toISOString(),
-          },
-          technicalInspection: {
-            required: false,
-            requiredFrom: requiredFrom.toISOString(),
-          },
-        },
-        accountStatus: 'pending',
-      },
-      vehicle: {
-        category: vehicle.category.trim(),
-        plate: vehicle.plate.trim().toUpperCase(),
-        brand: vehicle.brand.trim(),
-        model: vehicle.model.trim(),
-        year: Number(vehicle.year),
-        registrationDate: new Date(vehicle.registrationDate).toISOString(),
-        color: vehicle.color.trim(),
-        passengerCapacity: Number(vehicle.passengerCapacity),
-        photoUrl: 'https://placehold.co/320x180/png',
-      },
-    });
-  }, [canSubmit, personal, vehicle, documents, completeRegistration]);
+  const onSubmit = useCallback(async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const result = await registerDriver({ personal, vehicle, documents });
+      applyRegistrationResult(result);
+    } catch (error) {
+      const message =
+        error?.code === 'auth/email-already-in-use'
+          ? 'Ese correo ya está registrado'
+          : error?.message ?? 'No se pudo completar el registro';
+      setSubmitError(message);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [canSubmit, submitting, personal, vehicle, documents, applyRegistrationResult]);
 
   return (
     <View style={styles.root}>
+      {/* AI-assisted: see docs/AI_LOG.md #30 */}
       <View
         style={[
           styles.header,
@@ -180,18 +158,22 @@ export default function RegisterNavigator() {
           { paddingBottom: Math.max(insets.bottom, spacing.md) },
         ]}
       >
+        {submitError ? (
+          <Text style={[commonStyles.fieldError, styles.submitError]}>{submitError}</Text>
+        ) : null}
         <Pressable
           style={[
             commonStyles.primaryButton,
-            !canSubmit && commonStyles.buttonDisabled,
+            (!canSubmit || submitting) && commonStyles.buttonDisabled,
           ]}
           onPress={onSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || submitting}
         >
-          <Text style={commonStyles.primaryButtonText}>Enviar registro</Text>
-        </Pressable>
-        <Pressable style={commonStyles.outlineButton} onPress={signInMock}>
-          <Text style={commonStyles.outlineButtonText}>Saltar y usar conductor mock</Text>
+          {submitting ? (
+            <ActivityIndicator color={colors.onPrimary} />
+          ) : (
+            <Text style={commonStyles.primaryButtonText}>Enviar registro</Text>
+          )}
         </Pressable>
       </View>
     </View>
@@ -220,5 +202,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     backgroundColor: colors.surface,
+  },
+  submitError: {
+    marginBottom: spacing.sm,
+    textAlign: 'center',
   },
 });

@@ -2,9 +2,7 @@
 import React, { useCallback } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
-import { useDriverSession } from '../context/DriverSessionContext';
 import { PRICING } from '../config/pricing';
-import { t } from '../i18n';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 
@@ -13,8 +11,6 @@ import { commonStyles } from '../theme/commonStyles';
  */
 export default function TripSummaryScreen({ navigation }) {
   const { trip, markPaid, clearTrip } = useActiveTrip();
-  const { driver } = useDriverSession();
-  const lang = driver.language ?? 'es';
 
   const onConfirmPayment = useCallback(() => {
     const status = trip?.paymentMethod === 'cash' ? 'cash_received' : 'approved';
@@ -47,7 +43,7 @@ export default function TripSummaryScreen({ navigation }) {
     <View style={[commonStyles.screenPadded, { justifyContent: 'center' }]}>
       {/* AI-assisted: see docs/AI_LOG.md #21, #27 */}
       <Text style={[commonStyles.title, { textAlign: 'center', marginBottom: 16 }]}>
-        {t(lang, 'summaryTitle')}
+        Cobro y resumen
       </Text>
 
       <View style={commonStyles.card}>

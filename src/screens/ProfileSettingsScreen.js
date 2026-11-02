@@ -2,46 +2,23 @@
 import React, { useCallback } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useDriverSession } from '../context/DriverSessionContext';
-import { t } from '../i18n';
 import { commonStyles } from '../theme/commonStyles';
 
 /**
- * Profile and settings with mock driver/vehicle data and language toggle.
+ * Profile and settings for the authenticated driver.
  */
 export default function ProfileSettingsScreen() {
-  const {
-    driver,
-    vehicle,
-    updateLanguage,
-    signOut,
-    signInMock,
-    openRegistrationDemo,
-    isAuthenticated,
-  } = useDriverSession();
-  const lang = driver.language ?? 'es';
-
-  const toggleLanguage = useCallback(() => {
-    updateLanguage(lang === 'es' ? 'en' : 'es');
-  }, [lang, updateLanguage]);
+  const { driver, vehicle, signOut, isAuthenticated } = useDriverSession();
 
   const onSignOut = useCallback(() => {
     signOut();
   }, [signOut]);
 
-  const onOpenRegistration = useCallback(() => {
-    openRegistrationDemo();
-  }, [openRegistrationDemo]);
-
   if (!isAuthenticated) {
     return (
       <View style={commonStyles.screenPadded}>
         <Text style={commonStyles.title}>Sesión cerrada</Text>
-        <Pressable
-          style={[commonStyles.primaryButton, { marginTop: 20 }]}
-          onPress={signInMock}
-        >
-          <Text style={commonStyles.primaryButtonText}>Entrar (mock)</Text>
-        </Pressable>
+        <Text style={commonStyles.muted}>Regístrate o inicia sesión para continuar.</Text>
       </View>
     );
   }
@@ -49,7 +26,7 @@ export default function ProfileSettingsScreen() {
   return (
     <ScrollView style={commonStyles.screen} contentContainerStyle={commonStyles.content}>
       {/* AI-assisted: see docs/AI_LOG.md #25, #27 */}
-      <Text style={commonStyles.title}>{t(lang, 'profileTitle')}</Text>
+      <Text style={commonStyles.title}>Perfil</Text>
 
       <Section title="Conductor">
         <Line label="Nombre" value={driver.fullName} />
@@ -69,17 +46,9 @@ export default function ProfileSettingsScreen() {
         <Line label="Capacidad" value={String(vehicle.passengerCapacity)} />
       </Section>
 
-      <Section title={t(lang, 'settingsTitle')}>
-        <Pressable style={commonStyles.secondaryButton} onPress={toggleLanguage}>
-          <Text style={commonStyles.secondaryButtonText}>
-            Idioma: {lang === 'es' ? 'Español → English' : 'English → Español'}
-          </Text>
-        </Pressable>
-        <Pressable style={commonStyles.secondaryButton} onPress={onOpenRegistration}>
-          <Text style={commonStyles.secondaryButtonText}>Probar registro (demo)</Text>
-        </Pressable>
+      <Section title="Configuración">
         <Pressable style={commonStyles.dangerButton} onPress={onSignOut}>
-          <Text style={commonStyles.primaryButtonText}>{t(lang, 'signOut')}</Text>
+          <Text style={commonStyles.primaryButtonText}>Cerrar sesión</Text>
         </Pressable>
       </Section>
     </ScrollView>

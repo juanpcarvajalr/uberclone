@@ -10,7 +10,7 @@ import { ActiveTripProvider } from './src/context/ActiveTripContext';
 import RootNavigator from './src/navigation/RootNavigator';
 
 /**
- * App entry: providers + root navigation (mock data mode).
+ * App entry: providers + root navigation.
  */
 export default function App() {
   return (

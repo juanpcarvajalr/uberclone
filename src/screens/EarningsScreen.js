@@ -2,8 +2,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useEarnings } from '../hooks/useEarnings';
-import { useDriverSession } from '../context/DriverSessionContext';
-import { t } from '../i18n';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 import { spacing } from '../theme/tokens';
@@ -18,17 +16,15 @@ const PERIODS = [
  * Earnings dashboard over mock trips (today / week / month + balance).
  */
 export default function EarningsScreen() {
-  const { driver } = useDriverSession();
   const { today, week, month, balance } = useEarnings();
   const [period, setPeriod] = useState('today');
-  const lang = driver.language ?? 'es';
 
   const summary = period === 'today' ? today : period === 'week' ? week : month;
 
   return (
     <ScrollView style={commonStyles.screen} contentContainerStyle={commonStyles.content}>
       {/* AI-assisted: see docs/AI_LOG.md #15, #27 */}
-      <Text style={commonStyles.title}>{t(lang, 'earningsTitle')}</Text>
+      <Text style={commonStyles.title}>Ganancias</Text>
 
       <View style={commonStyles.balanceCard}>
         <Text style={commonStyles.balanceLabel}>Saldo del conductor</Text>

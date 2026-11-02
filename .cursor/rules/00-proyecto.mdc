@@ -11,7 +11,7 @@ alwaysApply: true
 
 ## Convenciones
 
-- Código, variables, campos de base de datos y comentarios: **inglés**. Textos de UI: vía i18n (es/en).
+- Código, variables, campos de base de datos y comentarios: **inglés**. Textos de UI: **español** (sin i18n).
 - Componentes funcionales con hooks. Nada de componentes de clase.
 - Toda suscripción, `watchPosition`, temporizador o listener se crea en un `useEffect` **con función de limpieza**.
 - Manejadores de aceptar/rechazar con `useCallback`; totales de ganancias con `useMemo`.

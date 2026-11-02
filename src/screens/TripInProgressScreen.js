@@ -2,8 +2,6 @@
 import React, { useCallback } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
-import { useDriverSession } from '../context/DriverSessionContext';
-import { t } from '../i18n';
 import { commonStyles } from '../theme/commonStyles';
 
 /**
@@ -11,8 +9,6 @@ import { commonStyles } from '../theme/commonStyles';
  */
 export default function TripInProgressScreen({ navigation }) {
   const { trip, markPassengerOnBoard, completeTrip } = useActiveTrip();
-  const { driver } = useDriverSession();
-  const lang = driver.language ?? 'es';
 
   const onBoard = useCallback(() => {
     markPassengerOnBoard();
@@ -39,7 +35,7 @@ export default function TripInProgressScreen({ navigation }) {
       {/* AI-assisted: see docs/AI_LOG.md #20, #27 */}
       <View style={commonStyles.mapStub}>
         <Text style={[commonStyles.subtitle, { textAlign: 'center' }]}>
-          {goingToPickup ? t(lang, 'goingToPickup') : t(lang, 'goingToDestination')}
+          {goingToPickup ? 'Rumbo al punto de recogida' : 'Rumbo al destino'}
         </Text>
         <Text style={[commonStyles.body, { textAlign: 'center', marginTop: 12 }]}>
           {target.address}
@@ -51,17 +47,17 @@ export default function TripInProgressScreen({ navigation }) {
       </View>
 
       <View style={commonStyles.panel}>
-        <Text style={commonStyles.title}>{t(lang, 'tripInProgress')}</Text>
+        <Text style={commonStyles.title}>Viaje en curso</Text>
         <Text style={commonStyles.caption}>
           {trip.origin.address} → {trip.destination.address}
         </Text>
         {goingToPickup ? (
           <Pressable style={commonStyles.primaryButton} onPress={onBoard}>
-            <Text style={commonStyles.primaryButtonText}>{t(lang, 'passengerOnBoard')}</Text>
+            <Text style={commonStyles.primaryButtonText}>Pasajero a bordo</Text>
           </Pressable>
         ) : (
           <Pressable style={commonStyles.primaryButton} onPress={onFinish}>
-            <Text style={commonStyles.primaryButtonText}>{t(lang, 'finishTrip')}</Text>
+            <Text style={commonStyles.primaryButtonText}>Finalizar viaje</Text>
           </Pressable>
         )}
       </View>

@@ -6,7 +6,6 @@ import { useDriverSession } from '../context/DriverSessionContext';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { useDriverLocation } from '../hooks/useDriverLocation';
 import { useTripRequests } from '../hooks/useTripRequests';
-import { t } from '../i18n';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 import { spacing } from '../theme/tokens';
@@ -19,7 +18,6 @@ export default function HomeScreen({ navigation }) {
   const { phase } = useActiveTrip();
   const { location, isTracking } = useDriverLocation();
   const { triggerMockRequest } = useTripRequests();
-  const lang = driver.language ?? 'es';
 
   const onToggle = useCallback(
     async (value) => {
@@ -74,7 +72,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={commonStyles.title}>Hola, {driver.fullName.split(' ')[0]}</Text>
         <View style={commonStyles.row}>
           <Text style={commonStyles.body}>
-            {isAvailable ? t(lang, 'available') : t(lang, 'unavailable')}
+            {isAvailable ? 'Disponible' : 'No disponible'}
           </Text>
           <Switch
             value={isAvailable}
@@ -87,7 +85,7 @@ export default function HomeScreen({ navigation }) {
           onPress={onSimulate}
           disabled={!isAvailable}
         >
-          <Text style={commonStyles.primaryButtonText}>{t(lang, 'simulateRequest')}</Text>
+          <Text style={commonStyles.primaryButtonText}>Simular solicitud</Text>
         </Pressable>
         <Pressable style={commonStyles.outlineButton} onPress={onOpenMenu}>
           <Text style={commonStyles.outlineButtonText}>Abrir menú</Text>
