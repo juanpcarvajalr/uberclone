@@ -620,3 +620,26 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Archivos y commit: `src/components/ImagePickerField.js`, `app.json` — Commit: pendiente
 - Verificación: _pendiente — sugerida: en registro usar Cámara, conceder permiso y ver la preview_
 - Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #38
+- Fecha: 2026-11-07
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Limitar campos numéricos del registro, corregir el texto de Términos y Condiciones y reforzar validaciones
+- Prompt:
+  ```text
+  uberclone 
+
+  Necesito que corrijas lo siguiente, y no olvides añadir la entrada a la bitácora.
+
+  Limitar campos sin permitir más escritura para los numéricos, y que no diga términos, sino Términos y Condiciones.
+
+  Además, mejora las validaciones de los campos.
+  ```
+- Resumen de la respuesta: Se cortó la entrada en documento, celular, licencia y placa con `maxLength` y sanitización al escribir. El switch pasó a “Términos y Condiciones”. Se reforzaron validadores (nombre completo, celular CO, contraseña, vacíos de año/capacidad) y se alineó `isPersonalTabValid` con `validatePassword`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: límites y sanitización en pestañas de registro; mensajes y reglas en `registerValidators.js`; texto del switch en Documentos
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/validation/registerValidators.js`, `src/screens/register/PersonalDataTab.js`, `src/screens/register/VehicleTab.js`, `src/screens/register/DocumentsTab.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: Se realizó la validación de los límites manualmente, y la data mockeada tampoco persiste. Siendo así exitoso el cambio.
+- Aprendizaje: Es recomendable realizar la limitación desde los campos directamente y no solo advertencias al usuario.

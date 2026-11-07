@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #24, #27, #29, #30, #31
+// AI-assisted: see docs/AI_LOG.md #24, #27, #29, #30, #31, #38
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import {
@@ -7,6 +7,10 @@ import {
   validateYear,
   validateRegistrationDate,
   validatePassengerCapacity,
+  sanitizePlateInput,
+  sanitizeTextInput,
+  BRAND_MODEL_MAX_LENGTH,
+  PLATE_MAX_LENGTH,
 } from '../../validation/registerValidators';
 import FormField from '../../components/FormField';
 import FormScrollView from '../../components/FormScrollView';
@@ -26,12 +30,14 @@ import { commonStyles } from '../../theme/commonStyles';
  * @param {{ values: object, onChange: Function }} props
  */
 export default function VehicleTab({ values, onChange }) {
-  const year = Number(values.year) || new Date().getFullYear();
+  const parsedYear = Number(values.year);
+  const hasValidYear = Number.isInteger(parsedYear);
   const yearOptions = useMemo(() => getYearOptions(), []);
   const capacityOptions = useMemo(
     () => getCapacityOptions(values.category),
     [values.category]
   );
+  const currentYear = new Date().getFullYear();
 
   const errors = {
     category: !(values.category ?? '').trim() ? 'Categoría obligatoria' : null,
@@ -39,7 +45,7 @@ export default function VehicleTab({ values, onChange }) {
     brand: validateBrandOrModel(values.brand, 'Marca'),
     model: validateBrandOrModel(values.model, 'Modelo'),
     year: validateYear(values.year),
-    registrationDate: validateRegistrationDate(values.registrationDate, year),
+    registrationDate: validateRegistrationDate(values.registrationDate, parsedYear),
     color: !(values.color ?? '').trim() ? 'Color obligatorio' : null,
     passengerCapacity: validatePassengerCapacity(
       values.category,
@@ -60,7 +66,7 @@ export default function VehicleTab({ values, onChange }) {
       style={commonStyles.screen}
       contentContainerStyle={commonStyles.content}
     >
-      {/* AI-assisted: see docs/AI_LOG.md #24, #29, #30, #31 */}
+      {/* AI-assisted: see docs/AI_LOG.md #24, #29, #30, #31, #38 */}
       <Text style={commonStyles.title}>Vehículo</Text>
       <View style={commonStyles.card}>
         <SelectField
@@ -73,20 +79,23 @@ export default function VehicleTab({ values, onChange }) {
         <FormField
           label="Placa"
           value={values.plate}
-          onChangeText={(v) => onChange('plate', v.toUpperCase())}
+          onChangeText={(v) => onChange('plate', sanitizePlateInput(v))}
           autoCapitalize="characters"
+          maxLength={PLATE_MAX_LENGTH}
           error={errors.plate}
         />
         <FormField
           label="Marca"
           value={values.brand}
-          onChangeText={(v) => onChange('brand', v)}
+          onChangeText={(v) => onChange('brand', sanitizeTextInput(v, BRAND_MODEL_MAX_LENGTH))}
+          maxLength={BRAND_MODEL_MAX_LENGTH}
           error={errors.brand}
         />
         <FormField
           label="Modelo"
           value={values.model}
-          onChangeText={(v) => onChange('model', v)}
+          onChangeText={(v) => onChange('model', sanitizeTextInput(v, BRAND_MODEL_MAX_LENGTH))}
+          maxLength={BRAND_MODEL_MAX_LENGTH}
           error={errors.model}
         />
         <SelectField
@@ -101,8 +110,8 @@ export default function VehicleTab({ values, onChange }) {
           value={values.registrationDate}
           onChange={(v) => onChange('registrationDate', v)}
           error={errors.registrationDate}
-          minimumYear={year - 1}
-          maximumYear={new Date().getFullYear()}
+          minimumYear={hasValidYear ? parsedYear - 1 : currentYear - 31}
+          maximumYear={currentYear}
         />
         <SelectField
           label="Color"
@@ -134,14 +143,14 @@ export default function VehicleTab({ values, onChange }) {
  * @returns {boolean}
  */
 export function isVehicleTabValid(values) {
-  const year = Number(values.year) || new Date().getFullYear();
+  const parsedYear = Number(values.year);
   return (
     !!(values.category ?? '').trim() &&
     !validatePlate(values.plate) &&
     !validateBrandOrModel(values.brand, 'Marca') &&
     !validateBrandOrModel(values.model, 'Modelo') &&
     !validateYear(values.year) &&
-    !validateRegistrationDate(values.registrationDate, year) &&
+    !validateRegistrationDate(values.registrationDate, parsedYear) &&
     !!(values.color ?? '').trim() &&
     !validatePassengerCapacity(values.category, values.passengerCapacity) &&
     !!values.vehiclePhotoUri

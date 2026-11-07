@@ -1,10 +1,14 @@
-// AI-assisted: see docs/AI_LOG.md #24, #27, #29, #30, #31
+// AI-assisted: see docs/AI_LOG.md #24, #27, #29, #30, #31, #38
 import React from 'react';
 import { View, Text, Switch } from 'react-native';
 import { format } from 'date-fns';
 import {
   validateDocumentsTab,
   validateEmail,
+  digitsOnly,
+  sanitizeTextInput,
+  EMAIL_MAX_LENGTH,
+  LICENSE_MAX_LENGTH,
 } from '../../validation/registerValidators';
 import {
   getTechnicalInspectionRequiredFrom,
@@ -66,13 +70,15 @@ export default function DocumentsTab({ values, registrationDate, onChange }) {
       style={commonStyles.screen}
       contentContainerStyle={commonStyles.content}
     >
-      {/* AI-assisted: see docs/AI_LOG.md #24, #29, #30, #31 */}
+      {/* AI-assisted: see docs/AI_LOG.md #24, #29, #30, #31, #38 */}
       <Text style={commonStyles.title}>Documentos y pagos</Text>
       <View style={commonStyles.card}>
         <FormField
           label="Número de licencia de conducción"
           value={values.licenseNumber}
-          onChangeText={(v) => onChange('licenseNumber', v)}
+          onChangeText={(v) => onChange('licenseNumber', digitsOnly(v, LICENSE_MAX_LENGTH))}
+          keyboardType="number-pad"
+          maxLength={LICENSE_MAX_LENGTH}
           error={errors.licenseNumber}
         />
         <ImagePickerField
@@ -131,9 +137,12 @@ export default function DocumentsTab({ values, registrationDate, onChange }) {
         <FormField
           label="Correo Mercado Pago"
           value={values.mercadoPagoEmail}
-          onChangeText={(v) => onChange('mercadoPagoEmail', v)}
+          onChangeText={(v) =>
+            onChange('mercadoPagoEmail', sanitizeTextInput(v, EMAIL_MAX_LENGTH).trimStart())
+          }
           keyboardType="email-address"
           autoCapitalize="none"
+          maxLength={EMAIL_MAX_LENGTH}
           error={errors.mercadoPagoEmail || validateEmail(values.mercadoPagoEmail)}
         />
 
@@ -144,7 +153,7 @@ export default function DocumentsTab({ values, registrationDate, onChange }) {
             trackColor={{ true: colors.accent, false: colors.border }}
           />
           <Text style={[commonStyles.body, { flex: 1 }]}>
-            Acepto términos (comisión {PRICING.commissionRate * 100} %)
+            Acepto Términos y Condiciones (comisión {PRICING.commissionRate * 100} %)
           </Text>
         </View>
         {errors.terms ? <Text style={commonStyles.fieldError}>{errors.terms}</Text> : null}

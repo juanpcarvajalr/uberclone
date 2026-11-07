@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #18, #24, #27, #29, #30
+// AI-assisted: see docs/AI_LOG.md #18, #24, #27, #29, #30, #38
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +26,7 @@ const initialPersonal = {
   fullName: '',
   documentNumber: '',
   phone: '',
-  birthDate: '1995-01-15',
+  birthDate: null,
   gender: '',
   email: '',
   password: '',
@@ -34,22 +34,22 @@ const initialPersonal = {
 };
 
 const initialVehicle = {
-  category: 'economy',
+  category: '',
   plate: '',
   brand: '',
   model: '',
-  year: '2022',
-  registrationDate: '2023-02-10',
+  year: '',
+  registrationDate: null,
   color: '',
-  passengerCapacity: '4',
+  passengerCapacity: '',
   vehiclePhotoUri: null,
 };
 
 const initialDocuments = {
   licenseNumber: '',
-  licenseExpiresAt: '2028-01-01',
-  soatExpiresAt: '2027-06-01',
-  inspectionExpiresAt: '2027-06-01',
+  licenseExpiresAt: null,
+  soatExpiresAt: null,
+  inspectionExpiresAt: null,
   mercadoPagoEmail: '',
   termsAccepted: false,
   licensePhotoUri: null,
