@@ -639,7 +639,67 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se cortó la entrada en documento, celular, licencia y placa con `maxLength` y sanitización al escribir. El switch pasó a “Términos y Condiciones”. Se reforzaron validadores (nombre completo, celular CO, contraseña, vacíos de año/capacidad) y se alineó `isPersonalTabValid` con `validatePassword`.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: límites y sanitización en pestañas de registro; mensajes y reglas en `registerValidators.js`; texto del switch en Documentos
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Aceptar cambios.
 - Archivos y commit: `src/validation/registerValidators.js`, `src/screens/register/PersonalDataTab.js`, `src/screens/register/VehicleTab.js`, `src/screens/register/DocumentsTab.js`, `docs/AI_LOG.md` — Commit: pendiente
 - Verificación: Se realizó la validación de los límites manualmente, y la data mockeada tampoco persiste. Siendo así exitoso el cambio.
 - Aprendizaje: Es recomendable realizar la limitación desde los campos directamente y no solo advertencias al usuario.
+
+### Entrada #39
+- Fecha: 2026-11-07
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Definir límites de cuota/presupuesto en Google Maps para evitar cobros inesperados
+- Prompt:
+  ```text
+  Tengo una duda. ¿Qué limites me recomiendas establecer en las APIs para prevenir un cobro a mi tarjeta? Regístralo en la bitácora.
+  ```
+- Resumen de la respuesta: Presupuesto mensual bajo (≈ USD 5–10) con alerta al 50/90/100 %, cuotas diarias modestas en Directions y Distance Matrix, y restricción de la API key por app/APIs. Maps SDK no suele ser el riesgo principal; el consumo de rutas sí.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: rangos de presupuesto y cuotas diarias orientativos según el uso de la spec
+  - Decisión del integrante: Aceptar recomendación.
+- Archivos y commit: `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: Se establecen los límites en la consola de Google Cloud.
+- Aprendizaje: N/A.
+
+### Entrada #40
+- Fecha: 2026-11-07
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Corregir validaciones, errores, teclado, doble clic y navegación atrás del login/registro
+- Prompt:
+  ```text
+  Necesito que corrijas los siguientes puntos que veo realizando pruebas en mi login:
+
+  1. Mejora las validaciones del campo de correo además que me está poniendo en mayúscula inicial.
+  2. La contraseña no debería verse en texto plano.
+  3. Necesito mejorar el manejo de errores y que sean más dicientes.
+  4. El botón de Entrar, permite hacer varios clics y por ende hace varias peticiones.
+  5. El teclado me tapa campos y botones.
+  6. En la pantalla de registro, debería poder volver atrás a @uberclone/src/screens/WelcomeScreen.js 
+
+  No olvides ingresar esto a la bitácora.
+  ```
+- Resumen de la respuesta: Se normalizó el correo (minúsculas, sin espacios, `autoCapitalize="none"`), se ocultó la contraseña, se pasaron errores bajo el campo con mensajes Firebase más claros, se bloqueó el doble envío, se usó `FormScrollView` para el teclado y se añadió “Volver” en registro hacia Welcome.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: ajustes en `WelcomeScreen`, `authService` y botón atrás en `RegisterNavigator`
+  - Decisión del integrante: Aceptar cambios.
+- Archivos y commit: `src/screens/WelcomeScreen.js`, `src/services/authService.js`, `src/navigation/RegisterNavigator.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: Se realiza la validación de cada uno de los puntos, siendo correctos.
+- Aprendizaje: La IA puede ayudar a resolver problemas en poco tiempo, usándola sabiamente.
+
+### Entrada #41
+- Fecha: 2026-11-07
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Evitar el flash de la pantalla de Registro al iniciar sesión
+- Prompt:
+  ```text
+  Hay algo extraño. Cuando inicio sesión, me muestra por 1 o 2 segundos la screen de Registro. Pero después sí va a la pantalla de Inicio. 
+  ```
+- Resumen de la respuesta: El login marcaba `isAuthenticated` antes de leer Firestore, y el navigator caía en Registro. Ahora se espera el perfil (`authReady` en false) y se actualizan autenticación y registro juntos.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: ajuste del listener en `DriverSessionContext.js`
+  - Decisión del integrante: Aceptar.
+- Archivos y commit: `src/context/DriverSessionContext.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: Se realiza el inicio de sesión y muestra un loading adecuado.
+- Aprendizaje: Debe tenerse presente el tiempo que puede tardar Firestore en confirmar la sesión, y prevenir posibles tiempos de respuesta lentos.

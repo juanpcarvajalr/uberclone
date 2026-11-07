@@ -1,6 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #18, #24, #27, #29, #30, #38
+// AI-assisted: see docs/AI_LOG.md #18, #24, #27, #29, #30, #38, #40
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,12 +63,14 @@ const initialDocuments = {
  */
 export default function RegisterNavigator() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const { applyRegistrationResult } = useDriverSession();
   const [personal, setPersonal] = useState(initialPersonal);
   const [vehicle, setVehicle] = useState(initialVehicle);
   const [documents, setDocuments] = useState(initialDocuments);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const canGoBack = navigation.canGoBack();
 
   const onPersonal = useCallback((key, value) => {
     setPersonal((prev) => ({ ...prev, [key]: value }));
@@ -109,13 +112,23 @@ export default function RegisterNavigator() {
 
   return (
     <View style={styles.root}>
-      {/* AI-assisted: see docs/AI_LOG.md #30 */}
+      {/* AI-assisted: see docs/AI_LOG.md #30, #40 */}
       <View
         style={[
           styles.header,
           { paddingTop: Math.max(insets.top, spacing.sm) + spacing.sm },
         ]}
       >
+        {canGoBack ? (
+          <Pressable
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            hitSlop={8}
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.onPrimary} />
+            <Text style={styles.backLabel}>Volver</Text>
+          </Pressable>
+        ) : null}
         <Text style={styles.headerTitle}>Registro del conductor</Text>
         <Text style={styles.headerSubtitle}>Completa las tres pestañas para enviar</Text>
       </View>
@@ -189,6 +202,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.lg,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+    alignSelf: 'flex-start',
+  },
+  backLabel: {
+    color: colors.onPrimary,
+    fontSize: 15,
+    fontWeight: '600',
   },
   headerTitle: {
     color: colors.onPrimary,

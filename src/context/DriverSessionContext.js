@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #28
+// AI-assisted: see docs/AI_LOG.md #9, #28, #41
 import React, {
   createContext,
   useCallback,
@@ -41,32 +41,37 @@ export function DriverSessionProvider({ children }) {
           setDriver(null);
           setVehicle(null);
           setIsAvailable(false);
-          setAuthReady(true);
           return;
         }
 
-        setIsAuthenticated(true);
+        setAuthReady(false);
+
         const driverSnap = await getDoc(doc(db, 'drivers', user.uid));
         if (!driverSnap.exists()) {
-          setHasCompletedRegistration(false);
           setDriver(null);
           setVehicle(null);
-          setAuthReady(true);
+          setHasCompletedRegistration(false);
+          setIsAuthenticated(true);
           return;
         }
 
         const driverData = { uid: user.uid, ...driverSnap.data() };
-        setDriver(driverData);
-        setHasCompletedRegistration(true);
+        let nextVehicle = null;
 
         if (driverData.vehicleId) {
           const vehicleSnap = await getDoc(doc(db, 'vehicles', driverData.vehicleId));
           if (vehicleSnap.exists()) {
-            setVehicle({ vehicleId: vehicleSnap.id, ...vehicleSnap.data() });
+            nextVehicle = { vehicleId: vehicleSnap.id, ...vehicleSnap.data() };
           }
         }
+
+        setDriver(driverData);
+        setVehicle(nextVehicle);
+        setHasCompletedRegistration(true);
+        setIsAuthenticated(true);
       } catch {
         setHasCompletedRegistration(false);
+        setIsAuthenticated(Boolean(auth.currentUser));
       } finally {
         setAuthReady(true);
       }

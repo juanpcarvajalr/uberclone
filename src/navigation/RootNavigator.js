@@ -1,9 +1,9 @@
-// AI-assisted: see docs/AI_LOG.md #18
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useDriverSession } from '../context/DriverSessionContext';
+import WelcomeScreen from '../screens/WelcomeScreen';
 import RegisterNavigator from './RegisterNavigator';
 import MainDrawer from './MainDrawer';
 import { colors } from '../theme/colors';
@@ -11,11 +11,10 @@ import { colors } from '../theme/colors';
 const Stack = createNativeStackNavigator();
 
 /**
- * Root navigator: registration vs main app based on Auth + Firestore profile.
+ * Root navigator: welcome/login, registration or main app.
  */
 export default function RootNavigator() {
   const { isAuthenticated, hasCompletedRegistration, authReady } = useDriverSession();
-  const showRegister = !isAuthenticated || !hasCompletedRegistration;
 
   if (!authReady) {
     return (
@@ -25,14 +24,31 @@ export default function RootNavigator() {
     );
   }
 
+  if (isAuthenticated && hasCompletedRegistration) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Main" component={MainDrawer} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
+  if (isAuthenticated && !hasCompletedRegistration) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Register" component={RegisterNavigator} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {showRegister ? (
-          <Stack.Screen name="Register" component={RegisterNavigator} />
-        ) : (
-          <Stack.Screen name="Main" component={MainDrawer} />
-        )}
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="Register" component={RegisterNavigator} />
       </Stack.Navigator>
     </NavigationContainer>
   );

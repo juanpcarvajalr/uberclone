@@ -109,6 +109,7 @@ export default function PersonalDataTab({ values, onChange }) {
           value={values.password}
           onChangeText={(v) => onChange('password', String(v ?? '').slice(0, PASSWORD_MAX_LENGTH))}
           secureTextEntry
+          showPasswordToggle
           autoCapitalize="none"
           maxLength={PASSWORD_MAX_LENGTH}
           error={errors.password}
