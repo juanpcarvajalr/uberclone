@@ -1,7 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #12, #27, #28
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Switch, Pressable, Alert } from 'react-native';
 import { DrawerActions } from '@react-navigation/native';
+import DriverMap from '../components/DriverMap';
 import { useDriverSession } from '../context/DriverSessionContext';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { useDriverLocation } from '../hooks/useDriverLocation';
@@ -11,12 +11,12 @@ import { commonStyles } from '../theme/commonStyles';
 import { spacing } from '../theme/tokens';
 
 /**
- * Home screen: mock map, availability toggle and request simulation.
+ * Home screen: map, availability toggle and request simulation.
  */
 export default function HomeScreen({ navigation }) {
   const { driver, isAvailable, setAvailability } = useDriverSession();
   const { phase } = useActiveTrip();
-  const { location, isTracking } = useDriverLocation();
+  const { location, isTracking, hasPermission, hasRealFix } = useDriverLocation();
   const { triggerMockRequest } = useTripRequests();
 
   const onToggle = useCallback(
@@ -57,19 +57,26 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={commonStyles.screen}>
-      {/* AI-assisted: see docs/AI_LOG.md #12, #27 */}
-      <View style={commonStyles.mapStub}>
-        <Text style={commonStyles.subtitle}>Mapa (mock)</Text>
+      <DriverMap
+        location={location}
+        isTracking={isTracking}
+        showDeviceLocation={hasPermission}
+      />
+
+      <View style={commonStyles.panel}>
+        <Text style={commonStyles.title}>Hola, {driver.fullName.split(' ')[0]}</Text>
         <Text style={styles.coords}>
           {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
         </Text>
         <Text style={[commonStyles.caption, styles.tracking]}>
-          {isTracking ? 'GPS simulado activo' : 'GPS detenido'}
+          {hasRealFix
+            ? isTracking
+              ? 'Seguimiento GPS activo'
+              : 'Ubicación GPS obtenida'
+            : hasPermission
+              ? 'Esperando GPS del emulador…'
+              : 'Sin permiso de ubicación'}
         </Text>
-      </View>
-
-      <View style={commonStyles.panel}>
-        <Text style={commonStyles.title}>Hola, {driver.fullName.split(' ')[0]}</Text>
         <View style={commonStyles.row}>
           <Text style={commonStyles.body}>
             {isAvailable ? 'Disponible' : 'No disponible'}

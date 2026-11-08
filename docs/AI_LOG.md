@@ -703,3 +703,21 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Archivos y commit: `src/context/DriverSessionContext.js`, `docs/AI_LOG.md` — Commit: pendiente
 - Verificación: Se realiza el inicio de sesión y muestra un loading adecuado.
 - Aprendizaje: Debe tenerse presente el tiempo que puede tardar Firestore en confirmar la sesión, y prevenir posibles tiempos de respuesta lentos.
+
+### Entrada #42
+- Fecha: 2026-11-07
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Corregir mapa en blanco en la pantalla de inicio
+- Prompt:
+  ```text
+  Ahora veo el mapa en blanco. ¿Solo se verá el mapa cuando esté disponible desde Firestore?
+
+  ```
+- Resumen de la respuesta: En Expo Go Google Maps no sirve; hace falta development build. El mapa gris se resolvió con layout + `newArchEnabled=false`. La ubicación no actualizaba porque el GPS solo corría al estar Disponible y quedaba el mock de Medellín; ahora se obtiene/observa GPS al abrir Inicio y se muestra con `showsUserLocation`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: Google Maps nativo, fix New Arch/layout, y GPS continuo en `useDriverLocation`/`DriverMap` para la ubicación actual
+  - Decisión del integrante: Aceptar cambios.
+- Archivos y commit: `src/components/DriverMap.js`, `src/hooks/useDriverLocation.js`, `src/screens/HomeScreen.js`, `app.config.js`, `android/gradle.properties`, `package.json`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: Se realiza el inicio de sesión, y se obtiene la ubicación correctamente.
+- Aprendizaje: Se necesita el development build para poder usar Google Maps. Además de esto, solo se iba a obtener la ubicación si el conductor estaba activo, pero para motivos de prueba, es mejor dejarlo con solo iniciar sesión.

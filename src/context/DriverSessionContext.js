@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
 import { MOCK_DRIVER_LOCATION } from '../mocks/driver';
 
@@ -69,6 +69,15 @@ export function DriverSessionProvider({ children }) {
         setVehicle(nextVehicle);
         setHasCompletedRegistration(true);
         setIsAuthenticated(true);
+
+        try {
+          const saved = await AsyncStorage.getItem(STORAGE_KEYS.isAvailable);
+          if (saved === 'true') {
+            setIsAvailable(true);
+          }
+        } catch {
+          // ignore
+        }
       } catch {
         setHasCompletedRegistration(false);
         setIsAuthenticated(Boolean(auth.currentUser));
@@ -99,14 +108,34 @@ export function DriverSessionProvider({ children }) {
     if (driver?.accountStatus !== 'approved' && next) {
       return { ok: false, reason: 'account_not_approved' };
     }
+
     setIsAvailable(next);
+
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.isAvailable, String(next));
     } catch {
       // ignore
     }
+
+    if (next && driver?.uid) {
+      try {
+        await setDoc(
+          doc(db, 'driverLocations', driver.uid),
+          {
+            isAvailable: true,
+            location,
+            category: vehicle?.category ?? 'economy',
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } catch {
+        // ignore
+      }
+    }
+
     return { ok: true };
-  }, [driver?.accountStatus]);
+  }, [driver?.accountStatus, driver?.uid, location, vehicle?.category]);
 
   const updateLocation = useCallback((coords) => {
     setLocation(coords);
