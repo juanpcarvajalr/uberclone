@@ -1,17 +1,33 @@
-// AI-assisted: see docs/AI_LOG.md #20, #27
-import React, { useCallback } from 'react';
-import { View, Text, Pressable } from 'react-native';
+// AI-assisted: see docs/AI_LOG.md #20, #27, #46
+import React, { useCallback, useState } from 'react';
+import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
+import { useDriverSession } from '../context/DriverSessionContext';
+import TripRouteMap from '../components/TripRouteMap';
+import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 
 /**
- * Trip in progress: pickup phase then destination phase (mock route labels).
+ * Trip in progress: Directions to pickup, then to destination (Spec §6).
  */
 export default function TripInProgressScreen({ navigation }) {
   const { trip, markPassengerOnBoard, completeTrip } = useActiveTrip();
+  const { location } = useDriverSession();
+  const [busy, setBusy] = useState(false);
 
-  const onBoard = useCallback(() => {
-    markPassengerOnBoard();
+  const onBoard = useCallback(async () => {
+    setBusy(true);
+    try {
+      const result = await markPassengerOnBoard();
+      if (!result?.ok) {
+        Alert.alert(
+          'Ruta',
+          result?.reason ?? 'No se pudo obtener la ruta al destino (Directions).'
+        );
+      }
+    } finally {
+      setBusy(false);
+    }
   }, [markPassengerOnBoard]);
 
   const onFinish = useCallback(() => {
@@ -27,31 +43,31 @@ export default function TripInProgressScreen({ navigation }) {
     );
   }
 
-  const goingToPickup = trip.status === 'accepted' || trip.status === 'driver_arriving';
+  const goingToPickup =
+    trip.status === 'accepted' || trip.status === 'driver_arriving';
   const target = goingToPickup ? trip.origin : trip.destination;
 
   return (
     <View style={commonStyles.screen}>
-      {/* AI-assisted: see docs/AI_LOG.md #20, #27 */}
-      <View style={commonStyles.mapStub}>
-        <Text style={[commonStyles.subtitle, { textAlign: 'center' }]}>
-          {goingToPickup ? 'Rumbo al punto de recogida' : 'Rumbo al destino'}
-        </Text>
-        <Text style={[commonStyles.body, { textAlign: 'center', marginTop: 12 }]}>
-          {target.address}
-        </Text>
-        <Text style={commonStyles.caption}>
-          {target.lat.toFixed(4)}, {target.lng.toFixed(4)}
-        </Text>
-        <Text style={[commonStyles.caption, { marginTop: 16 }]}>Estado: {trip.status}</Text>
-      </View>
+      <TripRouteMap
+        driverLocation={location}
+        target={target}
+        routeCoordinates={trip.routeCoordinates}
+        targetTitle={goingToPickup ? 'Punto de recogida' : 'Destino'}
+      />
 
       <View style={commonStyles.panel}>
         <Text style={commonStyles.title}>Viaje en curso</Text>
         <Text style={commonStyles.caption}>
+          {goingToPickup ? 'Rumbo al punto de recogida' : 'Rumbo al destino'}
+        </Text>
+        <Text style={commonStyles.body}>{target.address}</Text>
+        <Text style={commonStyles.caption}>
           {trip.origin.address} → {trip.destination.address}
         </Text>
-        {goingToPickup ? (
+        {busy ? (
+          <ActivityIndicator color={colors.accent} style={{ marginTop: 16 }} />
+        ) : goingToPickup ? (
           <Pressable style={commonStyles.primaryButton} onPress={onBoard}>
             <Text style={commonStyles.primaryButtonText}>Pasajero a bordo</Text>
           </Pressable>

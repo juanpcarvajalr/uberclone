@@ -38,5 +38,10 @@ service cloud.firestore {
           || resource.data.passengerId == request.auth.uid);
       allow write: if isSignedIn();
     }
+
+    match /devTriggers/{docId} {
+      allow read: if isSignedIn();
+      allow write: if true;
+    }
   }
 }

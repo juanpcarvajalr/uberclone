@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import { DriverSessionProvider } from './src/context/DriverSessionContext';
 import { ActiveTripProvider } from './src/context/ActiveTripContext';
+import TripRequestListener from './src/components/TripRequestListener';
 import RootNavigator from './src/navigation/RootNavigator';
 
 /**
@@ -18,6 +19,7 @@ export default function App() {
       <SafeAreaProvider>
         <DriverSessionProvider>
           <ActiveTripProvider>
+            <TripRequestListener />
             <RootNavigator />
             <StatusBar style="light" />
           </ActiveTripProvider>

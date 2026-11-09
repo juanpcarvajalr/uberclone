@@ -1,0 +1,34 @@
+{
+  "tripId": "trip_req_1794258589459",
+  "driverId": null,
+  "passengerId": "passenger_incoming",
+  "vehicleId": null,
+  "origin": {
+    "lat": 6.280302499999999,
+    "lng": -75.5963264,
+    "address": "Cra 89, Palenque, Medellín, Robledo, Medellín, Antioquia, Colombia"
+  },
+  "destination": {
+    "lat": 6.2040342,
+    "lng": -75.5554861,
+    "address": "El Tesoro, El Poblado, Medellín, Medellin, Antioquia, Colombia"
+  },
+  "distanceKm": 15.26,
+  "durationMin": 32.2,
+  "category": "xl",
+  "fare": 41800,
+  "commission": 8360,
+  "driverEarnings": 33440,
+  "tip": 0,
+  "commissionRate": 0.2,
+  "paymentMethod": "cash",
+  "paymentStatus": "pending",
+  "paymentId": null,
+  "status": "requested",
+  "rating": null,
+  "routePolyline": null,
+  "routeCoordinates": null,
+  "createdAt": "2026-11-09T21:09:49.459Z",
+  "completedAt": null,
+  "passengerName": "Pasajero"
+}

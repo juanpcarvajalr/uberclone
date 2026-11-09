@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #4
+// AI-assisted: see docs/AI_LOG.md #4, #44, #46
 import React, {
   createContext,
   useCallback,
@@ -8,7 +8,8 @@ import React, {
 } from 'react';
 import { canTransition } from '../utils/canTransition';
 import { calculateFare } from '../utils/calculateFare';
-import { MOCK_INCOMING_REQUEST } from '../mocks/trips';
+import { fetchDirections, fetchDistanceMatrix } from '../services/googleMaps';
+import { useDriverSession } from './DriverSessionContext';
 
 const ActiveTripContext = createContext(null);
 
@@ -61,31 +62,82 @@ function tripReducer(state, action) {
 }
 
 /**
- * Active trip state with validated status transitions (mock data).
+ * Active trip state with Matrix/Directions on accept and phase change.
  * @param {{ children: React.ReactNode }} props
  */
 export function ActiveTripProvider({ children }) {
   const [state, dispatch] = useReducer(tripReducer, initialState);
+  const { location, driver, vehicle } = useDriverSession();
 
-  const simulateIncomingRequest = useCallback(() => {
-    dispatch({
-      type: 'SET_INCOMING',
-      payload: {
-        ...MOCK_INCOMING_REQUEST,
-        createdAt: new Date().toISOString(),
-      },
-    });
+  const receiveIncomingRequest = useCallback((tripRequest) => {
+    try {
+      if (!tripRequest || typeof tripRequest !== 'object') {
+        throw new Error('tripRequest is required');
+      }
+      dispatch({
+        type: 'SET_INCOMING',
+        payload: {
+          ...tripRequest,
+          status: 'requested',
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      console.warn(
+        'receiveIncomingRequest failed:',
+        error instanceof Error ? error.message : String(error)
+      );
+    }
   }, []);
 
-  const acceptTrip = useCallback(() => {
-    dispatch({
-      type: 'ACCEPT_AND_ARRIVE',
-      payload: {
-        driverId: 'driver_mock_001',
-        vehicleId: 'vehicle_mock_001',
-      },
-    });
-  }, []);
+  const acceptTrip = useCallback(async () => {
+    try {
+      const trip = state.trip;
+      if (!trip) {
+        return { ok: false, reason: 'no_trip' };
+      }
+
+      const matrix = await fetchDistanceMatrix({
+        origin: trip.origin,
+        destination: trip.destination,
+      });
+      const breakdown = calculateFare({
+        distanceKm: matrix.distanceKm,
+        durationMin: matrix.durationMin,
+        category: trip.category,
+        tip: trip.tip ?? 0,
+      });
+
+      const toPickup = await fetchDirections({
+        origin: location,
+        destination: trip.origin,
+      });
+
+      dispatch({
+        type: 'ACCEPT_AND_ARRIVE',
+        payload: {
+          driverId: driver?.uid ?? null,
+          vehicleId: vehicle?.vehicleId ?? driver?.vehicleId ?? null,
+          distanceKm: matrix.distanceKm,
+          durationMin: matrix.durationMin,
+          ...breakdown,
+          routeCoordinates: toPickup.coordinates,
+          routePolyline: null,
+        },
+      });
+
+      return { ok: true };
+    } catch (error) {
+      console.warn(
+        'acceptTrip failed:',
+        error instanceof Error ? error.message : String(error)
+      );
+      return {
+        ok: false,
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }, [state.trip, location, driver, vehicle]);
 
   const rejectTrip = useCallback(() => {
     dispatch({
@@ -95,9 +147,41 @@ export function ActiveTripProvider({ children }) {
     dispatch({ type: 'CLEAR' });
   }, []);
 
-  const markPassengerOnBoard = useCallback(() => {
-    dispatch({ type: 'TRANSITION', payload: { to: 'in_progress' } });
-  }, []);
+  const markPassengerOnBoard = useCallback(async () => {
+    try {
+      const trip = state.trip;
+      if (!trip) {
+        return { ok: false, reason: 'no_trip' };
+      }
+
+      const toDestination = await fetchDirections({
+        origin: trip.origin,
+        destination: trip.destination,
+      });
+
+      dispatch({
+        type: 'TRANSITION',
+        payload: {
+          to: 'in_progress',
+          patch: {
+            routeCoordinates: toDestination.coordinates,
+            routePolyline: toDestination.routePolyline,
+          },
+        },
+      });
+
+      return { ok: true };
+    } catch (error) {
+      console.warn(
+        'markPassengerOnBoard failed:',
+        error instanceof Error ? error.message : String(error)
+      );
+      return {
+        ok: false,
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }, [state.trip]);
 
   const completeTrip = useCallback(() => {
     const trip = state.trip;
@@ -138,7 +222,7 @@ export function ActiveTripProvider({ children }) {
     () => ({
       trip: state.trip,
       phase: state.phase,
-      simulateIncomingRequest,
+      receiveIncomingRequest,
       acceptTrip,
       rejectTrip,
       markPassengerOnBoard,
@@ -149,7 +233,7 @@ export function ActiveTripProvider({ children }) {
     [
       state.trip,
       state.phase,
-      simulateIncomingRequest,
+      receiveIncomingRequest,
       acceptTrip,
       rejectTrip,
       markPassengerOnBoard,

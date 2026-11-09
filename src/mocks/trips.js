@@ -155,35 +155,3 @@ export const MOCK_TRIPS = [
     completedAt: '2026-10-12T11:45:00.000Z',
   },
 ];
-
-export const MOCK_INCOMING_REQUEST = {
-  tripId: 'trip_incoming_001',
-  driverId: null,
-  passengerId: 'passenger_incoming',
-  vehicleId: null,
-  origin: {
-    lat: 6.2442,
-    lng: -75.5812,
-    address: 'Calle 50 #46-36, Medellín',
-  },
-  destination: {
-    lat: 6.1987,
-    lng: -75.575,
-    address: 'El Tesoro, El Poblado',
-  },
-  distanceKm: 8.5,
-  durationMin: 22,
-  category: 'economy',
-  ...fareA,
-  tip: 0,
-  commissionRate: PRICING.commissionRate,
-  paymentMethod: 'mercadopago',
-  paymentStatus: 'pending',
-  paymentId: null,
-  status: 'requested',
-  rating: null,
-  routePolyline: null,
-  createdAt: new Date().toISOString(),
-  completedAt: null,
-  passengerName: 'María Gómez',
-};

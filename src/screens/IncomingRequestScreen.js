@@ -1,6 +1,6 @@
-// AI-assisted: see docs/AI_LOG.md #19, #27, #28
+// AI-assisted: see docs/AI_LOG.md #19, #27, #28, #46
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
@@ -14,6 +14,7 @@ const COUNTDOWN_SECONDS = 15;
 export default function IncomingRequestScreen({ navigation }) {
   const { trip, acceptTrip, rejectTrip } = useActiveTrip();
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
+  const [accepting, setAccepting] = useState(false);
   const expireAllowedRef = useRef(false);
 
   const onReject = useCallback(() => {
@@ -21,9 +22,22 @@ export default function IncomingRequestScreen({ navigation }) {
     navigation.navigate('Home');
   }, [rejectTrip, navigation]);
 
-  const onAccept = useCallback(() => {
-    acceptTrip();
-    navigation.replace('TripInProgress');
+  const onAccept = useCallback(async () => {
+    setAccepting(true);
+    try {
+      const result = await acceptTrip();
+      if (!result?.ok) {
+        Alert.alert(
+          'No se pudo aceptar',
+          result?.reason ??
+            'Falló Distance Matrix o Directions al aceptar (Spec §12).'
+        );
+        return;
+      }
+      navigation.replace('TripInProgress');
+    } finally {
+      setAccepting(false);
+    }
   }, [acceptTrip, navigation]);
 
   useEffect(() => {
@@ -94,11 +108,23 @@ export default function IncomingRequestScreen({ navigation }) {
       </View>
 
       <View style={styles.actions}>
-        <Pressable style={[styles.actionBtn, commonStyles.dangerButton]} onPress={onReject}>
+        <Pressable
+          style={[styles.actionBtn, commonStyles.dangerButton]}
+          onPress={onReject}
+          disabled={accepting}
+        >
           <Text style={commonStyles.primaryButtonText}>Rechazar</Text>
         </Pressable>
-        <Pressable style={[styles.actionBtn, commonStyles.accentButton]} onPress={onAccept}>
-          <Text style={commonStyles.primaryButtonText}>Aceptar</Text>
+        <Pressable
+          style={[styles.actionBtn, commonStyles.accentButton]}
+          onPress={onAccept}
+          disabled={accepting}
+        >
+          {accepting ? (
+            <ActivityIndicator color={colors.onPrimary} />
+          ) : (
+            <Text style={commonStyles.primaryButtonText}>Aceptar</Text>
+          )}
         </Pressable>
       </View>
     </View>

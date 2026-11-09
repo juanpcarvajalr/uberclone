@@ -738,3 +738,134 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Archivos y commit: `ninguno` — Commit: pendiente
 - Verificación: Se realiza la creación de la variable de entorno y se confirma que esté en el gitignore.
 - Aprendizaje: El access token de MP va en el .env del backend.
+
+### Entrada #44
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Definir y crear un script parametrizable para solicitudes de servicio de prueba
+- Prompt:
+  ```text
+  ¿Qué opinas de crear un script que sea parametrizable para la solicitud del servicio?
+
+  Perfecto. Ayúdame a crear el script y me informas del paso a paso para su ejecución. Además, modifica esta última entrada de la bitácora, para dejar una sola.
+  ```
+- Resumen de la respuesta: Conviene como herramienta de prueba. Se creó `buildTripRequest` + CLI `npm run create-trip-request`, que escribe `src/mocks/generatedIncomingRequest.json`; el botón Simular de la app carga esa solicitud y recalcula tarifa con `calculateFare`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: factory, script CLI, JSON generado y cableado en `ActiveTripContext`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/utils/buildTripRequest.js`, `scripts/createTripRequest.mjs`, `scripts/esmResolveHook.mjs`, `scripts/registerEsmResolve.mjs`, `src/mocks/generatedIncomingRequest.json`, `src/context/ActiveTripContext.js`, `src/mocks/trips.js`, `package.json`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `npm run create-trip-request -- --category xl --km 8.5 --min 22 --payment cash`, recargar la app, Disponible + Simular, y revisar categoría/tarifa en Solicitud entrante_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #45
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Confirmar filtro por categoría y si el conductor ingresa origen/destino
+- Prompt:
+  ```text
+  Pero espera, si mi vehículo es economy, solo deberían llegarme las solicitudes de economy. Sino, quedar en el limbo. O así con cada categoría.
+
+  Además, tengo una pregunta. ¿En el alcance se define si debo ingresar el origen y el destino del viaje?
+  ```
+- Resumen de la respuesta: Sí: la spec guarda `category` en `driverLocations` para filtrar. Se aplicó el filtro en listener/inbox/botón Simular. Origen y destino los trae la solicitud (lado pasajero / Distance Matrix); el conductor no los digita, solo los ve y navega con Directions.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: filtro por categoría en `useTripRequests`, inbox HTTP y `HomeScreen`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/hooks/useTripRequests.js`, `scripts/createTripRequest.mjs`, `src/screens/HomeScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: con vehículo economy, lanzar solicitud `--category xl` (no debe abrir) y luego `--category economy` (sí debe abrir)_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #46
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Implementar flujo pasajero→conductor con Matrix/Directions según la spec
+- Prompt:
+  ```text
+  Perfecto, entonces ayúdame a implementar la lógica para que funcione así:
+
+  Origen y destino: en el alcance del conductor no los ingresas. Vienen en la solicitud (los define el pasajero / la creación del viaje). Tú los ves en Solicitud entrante y luego navegas recogida → destino con Google Directions. Distance Matrix calcula km/min al crear y al aceptar; no es un formulario tuyo de origen/destino.
+
+  El script hará las funciones de pasajero. Si es necesario crea un script bash que haga esto: adb reverse tcp:8765 tcp:8765 y luego ejecute el script de node, y yo pueda enviar los parámetros requeridos según la SPEC del proyecto. Para empezar a darle forma al proyecto. Recuerda ceñirte a la SPEC y no asumir nada.
+  ```
+- Resumen de la respuesta: El CLI pasa a ser simulador de pasajero: exige origen/destino/categoría/pago, llama Distance Matrix al crear y ofrece la solicitud. Al aceptar, Matrix otra vez + Directions al pickup; al “Pasajero a bordo”, Directions al destino con Polyline. Se añadió `scripts/request-trip.sh` (adb reverse + npm).
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `googleMapsApi`, factory sin defaults de origen/destino, CLI + bash, accept/fase con APIs, `TripRouteMap`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/services/googleMapsApi.js`, `src/services/googleMaps.js`, `src/utils/decodePolyline.js`, `src/utils/buildTripRequest.js`, `scripts/createTripRequest.mjs`, `scripts/request-trip.sh`, `src/context/ActiveTripContext.js`, `src/screens/IncomingRequestScreen.js`, `src/screens/TripInProgressScreen.js`, `src/components/TripRouteMap.js`, `package.json`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `npm run request-trip -- --category economy --payment cash --origin "..." --origin-lat ... --origin-lng ... --destination "..." --dest-lat ... --dest-lng ...` con conductor Disponible; aceptar y comprobar ruta al pickup y luego al destino_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #47
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Aclarar si bastan direcciones y para qué sirve el bash
+- Prompt:
+  ```text
+  ¿Debo enviar siempre latitud y longitud? ¿No simplemente el origen y destino?
+
+  Además, ¿Entonces para qué creaste un bash si igual debo ejecutar algo así?
+
+  npm run request-trip -- \
+    --category economy \
+    --payment cash \
+    --origin "Calle 50 #46-36, Medellín" \
+    --origin-lat 6.2442 \
+    --origin-lng -75.5812 \
+    --destination "El Tesoro, El Poblado" \
+    --dest-lat 6.1987 \
+    --dest-lng -75.575
+  ```
+- Resumen de la respuesta: No hace falta mandar lat/lng: el modelo sí las guarda, pero el script geocodifica desde las direcciones. El bash no quita los parámetros del viaje; solo encadena `adb reverse` + el CLI para no correr dos comandos.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `geocodeAddress` + CLI solo con `--origin` / `--destination` (coords opcionales)
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/services/googleMapsApi.js`, `scripts/createTripRequest.mjs`, `scripts/request-trip.sh`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `npm run request-trip -- --category economy --payment cash --origin "Calle 50 #46-36, Medellín" --destination "El Tesoro, El Poblado"` con Geocoding API habilitada en la KEY_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #48
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Arreglar request-trip colgado en adb y REQUEST_DENIED de Geocoding
+- Prompt:
+  ```text
+  El script ya no parece funcionar.
+
+  Además, la petición sí llegó a Google:
+
+  API
+  Solicitudes
+  Errores
+  Latencia promedio (ms)
+  99% de latencia (ms)
+  Geocoding API	1	1	20	33
+  ```
+- Resumen de la respuesta: `adb reverse` se colgaba y frenaba el bash; se puso timeout y se llama al CLI con `exec`. `REQUEST_DENIED` es restricción/permiso de la KEY (1 error en consola). Se documentó `--clave=valor` para no perder espacios con npm.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: timeout en `request-trip.sh`, parse `--key=value`, mensaje de error de Geocoding, README
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `scripts/request-trip.sh`, `scripts/createTripRequest.mjs`, `src/services/googleMapsApi.js`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `npm run request-trip -- --category=economy --payment=cash --origin="Altos de Polanco" --destination="El Tesoro, El Poblado"` con KEY válida para Geocoding_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #49
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Saber qué configurar en Firestore para completar el flujo según la spec
+- Prompt:
+  ```text
+  Perfecto, ahora sí. Entonces dime qué debo configurar en Firestore para que la aplicación siga completando su flujo según la SPEC del proyecto.
+  ```
+- Resumen de la respuesta: El registro crea drivers/vehicles/driverLocations. En consola solo hay que aprobar `accountStatus` y, si se prueba, alinear `vehicles.category` con el script. `trips` aún no lo escribe el flujo simulado; historial/ganancias siguen en mock. Publicar `firestore.rules` (incl. `devTriggers` si se usa push).
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: guía operativa de Firestore según §5 y §11
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `ninguno` — Commit: pendiente
+- Verificación: _pendiente — sugerida: approved + category coincidente + Disponible + request-trip_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_

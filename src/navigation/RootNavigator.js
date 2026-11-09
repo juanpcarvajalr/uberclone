@@ -6,6 +6,7 @@ import { useDriverSession } from '../context/DriverSessionContext';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import RegisterNavigator from './RegisterNavigator';
 import MainDrawer from './MainDrawer';
+import { navigationRef } from './navigationRef';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator();
@@ -26,7 +27,7 @@ export default function RootNavigator() {
 
   if (isAuthenticated && hasCompletedRegistration) {
     return (
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Main" component={MainDrawer} />
         </Stack.Navigator>

@@ -5,19 +5,18 @@ import DriverMap from '../components/DriverMap';
 import { useDriverSession } from '../context/DriverSessionContext';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { useDriverLocation } from '../hooks/useDriverLocation';
-import { useTripRequests } from '../hooks/useTripRequests';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 import { spacing } from '../theme/tokens';
 
 /**
- * Home screen: map, availability toggle and request simulation.
+ * Home screen: map and availability toggle.
+ * Incoming requests arrive from the passenger script (see README).
  */
 export default function HomeScreen({ navigation }) {
   const { driver, isAvailable, setAvailability } = useDriverSession();
   const { phase } = useActiveTrip();
   const { location, isTracking, hasPermission, hasRealFix } = useDriverLocation();
-  const { triggerMockRequest } = useTripRequests();
 
   const onToggle = useCallback(
     async (value) => {
@@ -31,15 +30,6 @@ export default function HomeScreen({ navigation }) {
     },
     [setAvailability]
   );
-
-  const onSimulate = useCallback(() => {
-    const ok = triggerMockRequest();
-    if (ok) {
-      navigation.navigate('IncomingRequest');
-      return;
-    }
-    Alert.alert('No disponible', 'Activa Disponible y no tengas un viaje activo.');
-  }, [triggerMockRequest, navigation]);
 
   const onOpenMenu = useCallback(() => {
     navigation.dispatch(DrawerActions.openDrawer());
@@ -87,13 +77,9 @@ export default function HomeScreen({ navigation }) {
             trackColor={{ false: colors.border, true: colors.accent }}
           />
         </View>
-        <Pressable
-          style={[commonStyles.primaryButton, !isAvailable && commonStyles.buttonDisabled]}
-          onPress={onSimulate}
-          disabled={!isAvailable}
-        >
-          <Text style={commonStyles.primaryButtonText}>Simular solicitud</Text>
-        </Pressable>
+        <Text style={[commonStyles.caption, styles.hint]}>
+          Las solicitudes llegan con el script request-trip (misma categoría).
+        </Text>
         <Pressable style={commonStyles.outlineButton} onPress={onOpenMenu}>
           <Text style={commonStyles.outlineButtonText}>Abrir menú</Text>
         </Pressable>
@@ -109,4 +95,5 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   tracking: { marginTop: spacing.xs },
+  hint: { marginTop: spacing.md, marginBottom: spacing.sm },
 });
