@@ -235,9 +235,9 @@ Se usa **Context, no Redux**: el estado global es pequeño (sesión y viaje acti
 
 1. Al finalizar el viaje, la app calcula la tarifa final con **la misma** `calculateFare` usada en la estimación.
 2. La app envía al backend `tripId` y monto.
-3. El backend crea la **preferencia** (Mercado Pago) o el **PaymentIntent** (Stripe) con la llave secreta.
+3. El backend crea la orden de Checkout Pro (API de Orders) con el access token y devuelve el checkout_url
 4. La app abre el checkout; el pasajero paga con tarjeta de prueba.
-5. La pasarela notifica (URL de retorno o webhook) y el backend actualiza el viaje: `paymentStatus`, `paymentId`, `status: "paid"`.
+5. Mercado Pago redirige a la URL de retorno; la app la detecta y el backend verifica el estado del pago en la API antes de actualizar el viaje.
 6. La app del conductor escucha el cambio en tiempo real y muestra el resumen.
 
 ### Reglas de seguridad (no negociables)

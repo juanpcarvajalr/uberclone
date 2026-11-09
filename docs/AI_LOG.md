@@ -721,3 +721,20 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Archivos y commit: `src/components/DriverMap.js`, `src/hooks/useDriverLocation.js`, `src/screens/HomeScreen.js`, `app.config.js`, `android/gradle.properties`, `package.json`, `docs/AI_LOG.md` — Commit: pendiente
 - Verificación: Se realiza el inicio de sesión, y se obtiene la ubicación correctamente.
 - Aprendizaje: Se necesita el development build para poder usar Google Maps. Además de esto, solo se iba a obtener la ubicación si el conductor estaba activo, pero para motivos de prueba, es mejor dejarlo con solo iniciar sesión.
+
+### Entrada #43
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Ubicar dónde van las variables de entorno de Mercado Pago
+- Prompt:
+  ```text
+  ¿Dónde debo poner las variables de entorno de mercado pago?
+  ```
+- Resumen de la respuesta: Van solo en `backend/.env` (access_token y secretos), nunca en el `.env` de la app ni en el código. El `.env` de la raíz es para cosas como la KEY de Google Maps. Aún no existe la carpeta `backend/`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: orientación según la spec y la regla de seguridad
+  - Decisión del integrante: Aceptar.
+- Archivos y commit: `ninguno` — Commit: pendiente
+- Verificación: Se realiza la creación de la variable de entorno y se confirma que esté en el gitignore.
+- Aprendizaje: El access token de MP va en el .env del backend.

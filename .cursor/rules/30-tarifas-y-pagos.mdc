@@ -13,3 +13,4 @@ alwaysApply: false
 - Los casos de prueba de la sección 10 de @docs/PROJECT_SPEC.md deben pasar siempre (8,5 km/22 min → economy 19.200/3.840/15.360; xl 26.900/5.380/21.520).
 - Efectivo: la comisión se descuenta del saldo del conductor (puede ser negativo).
 - Solo el backend cambia `paymentStatus`, `paymentId` y `status: "paid"` tras la notificación de la pasarela.
+- Mercado Pago se integra con **Checkout Pro vía API de Orders**, no con la API de Preferences (legacy). No generar código con `Preference` ni `init_point`; ante la duda, consultar la documentación oficial de "Checkout Pro via Orders".

@@ -7,7 +7,7 @@ alwaysApply: true
 
 - `access_token` de Mercado Pago y secret key de Stripe **solo en `backend/.env`**, nunca en la app, nunca en el historial de Git.
 - Mantener `.env` en `.gitignore` y actualizar `.env.example` (solo nombres, sin valores) cuando se agregue una variable.
-- Solo credenciales de **prueba** (`TEST-...`, `sk_test_...`, `pk_test_...`). Si ves una llave de producción, detente y avisa.
+- Solo credenciales de **prueba**. En Mercado Pago, las de prueba pertenecen a la cuenta de prueba vendedor y también empiezan por `APP_USR`, por lo que el prefijo no sirve para distinguirlas: usar únicamente las que aparecen en la aplicación de prueba de Tus integraciones. En Stripe: `sk_test_` / `pk_test_`.
 - Nunca guardar números de tarjeta ni de cuenta bancaria en la app, base de datos o AsyncStorage.
 - AsyncStorage solo para: sesión y último estado de disponibilidad.
 - La API key de Google se restringe por aplicación; recordarlo al configurar mapas.

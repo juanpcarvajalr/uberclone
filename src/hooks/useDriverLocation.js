@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import * as Location from 'expo-location';
+// AI-assisted: see docs/AI_LOG.md #42, #43
+import { useEffect, useState } from 'react';
+import { PermissionsAndroid, Platform } from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
 import { useDriverSession } from '../context/DriverSessionContext';
 
 const TICK_MS = 5000;
-const JITTER = 0.00015;
+const DISTANCE_M = 5;
 
 /**
- * @param {import('expo-location').LocationObjectCoords} coords
+ * @param {{ latitude: number, longitude: number }} coords
  * @returns {{ lat: number, lng: number }}
  */
 function toLatLng(coords) {
@@ -17,88 +19,96 @@ function toLatLng(coords) {
 }
 
 /**
- * Keeps the map on the device GPS. Continuous watch is for UI;
- * availability only controls whether the driver is "en seguimiento".
+ * @returns {Promise<boolean>}
+ */
+async function requestLocationPermission() {
+  try {
+    if (Platform.OS === 'android') {
+      const result = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+      );
+      return result === PermissionsAndroid.RESULTS.GRANTED;
+    }
+
+    return await new Promise((resolve) => {
+      Geolocation.requestAuthorization(
+        () => resolve(true),
+        () => resolve(false)
+      );
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Keeps the map on the device GPS via watchPosition.
+ * Availability only controls whether the driver is "en seguimiento".
  */
 export function useDriverLocation() {
   const { isAvailable, location, updateLocation } = useDriverSession();
-  const locationRef = useRef(location);
-  locationRef.current = location;
   const [hasPermission, setHasPermission] = useState(false);
   const [hasRealFix, setHasRealFix] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    let subscription = null;
-    let mockInterval = null;
+    let watchId = null;
+
+    Geolocation.setRNConfiguration({
+      skipPermissionRequests: false,
+      authorizationLevel: 'whenInUse',
+      locationProvider: 'auto',
+    });
 
     (async () => {
       try {
-        const current = await Location.getForegroundPermissionsAsync();
-        const permission =
-          current.status === 'granted'
-            ? current
-            : await Location.requestForegroundPermissionsAsync();
-
-        if (cancelled || permission.status !== 'granted') {
+        const granted = await requestLocationPermission();
+        if (cancelled || !granted) {
           return;
         }
 
         setHasPermission(true);
 
-        try {
-          const last = await Location.getLastKnownPositionAsync();
-          if (!cancelled && last?.coords) {
-            setHasRealFix(true);
-            updateLocation(toLatLng(last.coords));
-          }
-        } catch {
-          // ignore
-        }
-
-        try {
-          const fix = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High,
-          });
-          if (!cancelled && fix?.coords) {
-            setHasRealFix(true);
-            updateLocation(toLatLng(fix.coords));
-          }
-        } catch {
-          // emulator may need Set Location before this succeeds
-        }
-
-        subscription = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: TICK_MS,
-            distanceInterval: 5,
-          },
+        Geolocation.getCurrentPosition(
           (fix) => {
+            if (cancelled || !fix?.coords) return;
             setHasRealFix(true);
             updateLocation(toLatLng(fix.coords));
+          },
+          () => {},
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 10000,
+          }
+        );
+
+        watchId = Geolocation.watchPosition(
+          (fix) => {
+            if (!fix?.coords) return;
+            setHasRealFix(true);
+            updateLocation(toLatLng(fix.coords));
+          },
+          () => {},
+          {
+            enableHighAccuracy: true,
+            distanceFilter: DISTANCE_M,
+            interval: TICK_MS,
+            fastestInterval: TICK_MS,
+            maximumAge: 10000,
+            timeout: 15000,
           }
         );
       } catch {
-        if (cancelled) return;
-        mockInterval = setInterval(() => {
-          const currentLocation = locationRef.current;
-          updateLocation({
-            lat: Number(
-              (currentLocation.lat + (Math.random() - 0.5) * JITTER).toFixed(6)
-            ),
-            lng: Number(
-              (currentLocation.lng + (Math.random() - 0.5) * JITTER).toFixed(6)
-            ),
-          });
-        }, TICK_MS);
+        // permission or native module failure — keep last known location
       }
     })();
 
     return () => {
       cancelled = true;
-      subscription?.remove();
-      if (mockInterval) clearInterval(mockInterval);
+      if (watchId != null) {
+        Geolocation.clearWatch(watchId);
+      }
     };
   }, [updateLocation]);
 

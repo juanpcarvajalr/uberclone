@@ -1,3 +1,4 @@
+// AI-assisted: see docs/AI_LOG.md #43
 const path = require('path');
 const fs = require('fs');
 const appJson = require('./app.json');
@@ -58,13 +59,6 @@ module.exports = () => ({
     plugins: [
       ...(appJson.expo.plugins ?? []),
       'expo-font',
-      [
-        'expo-location',
-        {
-          locationWhenInUsePermission:
-            'Necesitamos tu ubicación para mostrarte en el mapa mientras estás disponible.',
-        },
-      ],
       [
         'react-native-maps',
         {
