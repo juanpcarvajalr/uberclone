@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #11, #44, #45
+// AI-assisted: see docs/AI_LOG.md #11, #44, #45, #50
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useDriverSession } from '../context/DriverSessionContext';
@@ -41,7 +41,7 @@ export function useTripRequests() {
   const driverCategory = vehicle?.category ?? null;
 
   const applyIncoming = useCallback(
-    (requestInput, triggerId) => {
+    async (requestInput, triggerId) => {
       try {
         if (!isAvailable || trip) {
           return false;
@@ -55,7 +55,11 @@ export function useTripRequests() {
         if (triggerId) {
           lastTriggerIdRef.current = triggerId;
         }
-        receiveIncomingRequest(requestInput);
+        const result = await receiveIncomingRequest(requestInput);
+        if (!result?.ok) {
+          lastTriggerIdRef.current = null;
+          return false;
+        }
         setLastReceivedAt(new Date().toISOString());
         navigateToIncomingRequest();
         return true;

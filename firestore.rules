@@ -33,10 +33,16 @@ service cloud.firestore {
     }
 
     match /trips/{tripId} {
+      allow create: if isSignedIn();
       allow read: if isSignedIn()
         && (resource.data.driverId == request.auth.uid
-          || resource.data.passengerId == request.auth.uid);
-      allow write: if isSignedIn();
+          || resource.data.passengerId == request.auth.uid
+          || resource.data.driverId == null);
+      allow update: if isSignedIn()
+        && (resource.data.driverId == null
+          || resource.data.driverId == request.auth.uid
+          || request.resource.data.driverId == request.auth.uid);
+      allow delete: if false;
     }
 
     match /devTriggers/{docId} {

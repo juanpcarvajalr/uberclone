@@ -69,7 +69,7 @@ function readGoogleMapsKey() {
  */
 function printHelp() {
   console.log(`
-Passenger simulator (Spec §6 / §11 / §12)
+Passenger simulator (Spec 6 / 11 / 12)
 You pass origin/destination as addresses (like a passenger).
 The script geocodes them to { lat, lng, address }, runs Distance Matrix once,
 calculates fare, and offers the request to a matching driver category.
@@ -81,7 +81,7 @@ Required:
   --destination <address>
 
 Optional:
-  --tip <number>           Default 0 (COP)
+  --tip <number>           Propina en COP (default 0). Va completa al conductor (Spec 10).
   --passenger <name>
   --origin-lat / --origin-lng / --dest-lat / --dest-lng
                            Skip geocoding for that place if both lat+lng are set
@@ -95,7 +95,8 @@ Examples (use --key=value so spaces survive npm):
     --category=economy \\
     --payment=cash \\
     --origin="Altos de Polanco" \\
-    --destination="El Tesoro, El Poblado"
+    --destination="El Tesoro, El Poblado" \\
+    --tip=2000
 
   ./scripts/request-trip.sh \\
     --category=xl \\
@@ -342,8 +343,21 @@ async function main() {
     }
 
     console.log(json);
+    console.log('Spec 6.2 Solicitud entrante payload:');
     console.log(
-      `fare=${tripRequest.fare} commission=${tripRequest.commission} driverEarnings=${tripRequest.driverEarnings}`
+      [
+        `  origin=${tripRequest.origin.address}`,
+        `  destination=${tripRequest.destination.address}`,
+        `  distanceKm=${tripRequest.distanceKm}`,
+        `  durationMin=${tripRequest.durationMin}`,
+        `  category=${tripRequest.category}`,
+        `  paymentMethod=${tripRequest.paymentMethod}`,
+        `  fare=${tripRequest.fare}`,
+        `  driverEarnings=${tripRequest.driverEarnings}`,
+      ].join('\n')
+    );
+    console.log(
+      `Spec 10/11 extras: tip=${tripRequest.tip} commission=${tripRequest.commission} commissionRate=${tripRequest.commissionRate}`
     );
 
     if (args.print) {

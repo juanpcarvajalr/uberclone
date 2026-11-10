@@ -1,20 +1,46 @@
-// AI-assisted: see docs/AI_LOG.md #21, #27
-import React, { useCallback } from 'react';
-import { View, Text, Pressable } from 'react-native';
+// AI-assisted: see docs/AI_LOG.md #21, #27, #50
+import React, { useCallback, useState } from 'react';
+import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { PRICING } from '../config/pricing';
+import {
+  errorReasonLabel,
+  paymentMethodLabel,
+  paymentStatusLabel,
+} from '../utils/displayLabels';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 
 /**
- * Fare summary and mock payment confirmation.
+ * Fare summary and cash payment confirmation.
  */
 export default function TripSummaryScreen({ navigation }) {
   const { trip, markPaid, clearTrip } = useActiveTrip();
+  const [busy, setBusy] = useState(false);
 
-  const onConfirmPayment = useCallback(() => {
-    const status = trip?.paymentMethod === 'cash' ? 'cash_received' : 'approved';
-    markPaid(status);
+  const onConfirmPayment = useCallback(async () => {
+    if (trip?.paymentMethod !== 'cash') {
+      Alert.alert(
+        'Pago',
+        'Por ahora solo está habilitado el cobro en efectivo.'
+      );
+      return;
+    }
+    setBusy(true);
+    try {
+      const result = await markPaid();
+      if (!result?.ok) {
+        Alert.alert(
+          'Pago',
+          errorReasonLabel(
+            result?.reason,
+            'No se pudo confirmar el pago en efectivo.'
+          )
+        );
+      }
+    } finally {
+      setBusy(false);
+    }
   }, [markPaid, trip?.paymentMethod]);
 
   const onDone = useCallback(() => {
@@ -30,18 +56,8 @@ export default function TripSummaryScreen({ navigation }) {
     );
   }
 
-  const paymentLabel =
-    trip.status === 'paid'
-      ? trip.paymentMethod === 'cash'
-        ? 'Efectivo'
-        : trip.paymentStatus === 'approved'
-          ? 'Aprobado'
-          : trip.paymentStatus
-      : 'Pendiente';
-
   return (
     <View style={[commonStyles.screenPadded, { justifyContent: 'center' }]}>
-      {/* AI-assisted: see docs/AI_LOG.md #21, #27 */}
       <Text style={[commonStyles.title, { textAlign: 'center', marginBottom: 16 }]}>
         Cobro y resumen
       </Text>
@@ -58,20 +74,29 @@ export default function TripSummaryScreen({ navigation }) {
           value={`$${trip.driverEarnings.toLocaleString('es-CO')}`}
           emphasize
         />
-        <Row label="Método de pago" value={trip.paymentMethod} />
-        <Row label="Estado del pago" value={paymentLabel} />
+        <Row
+          label="Método de pago"
+          value={paymentMethodLabel(trip.paymentMethod)}
+        />
+        <Row
+          label="Estado del pago"
+          value={paymentStatusLabel(trip.paymentStatus, trip.status)}
+        />
       </View>
 
       {trip.status !== 'paid' ? (
         <Pressable
           style={[commonStyles.primaryButton, { marginTop: 20 }]}
           onPress={onConfirmPayment}
+          disabled={busy}
         >
-          <Text style={commonStyles.primaryButtonText}>
-            {trip.paymentMethod === 'cash'
-              ? 'Marcar efectivo recibido'
-              : 'Simular pago aprobado'}
-          </Text>
+          {busy ? (
+            <ActivityIndicator color={colors.onPrimary} />
+          ) : (
+            <Text style={commonStyles.primaryButtonText}>
+              Confirmar pago en efectivo
+            </Text>
+          )}
         </Pressable>
       ) : (
         <Pressable style={[commonStyles.primaryButton, { marginTop: 20 }]} onPress={onDone}>
@@ -82,6 +107,9 @@ export default function TripSummaryScreen({ navigation }) {
   );
 }
 
+/**
+ * @param {{ label: string, value: string, emphasize?: boolean }} props
+ */
 function Row({ label, value, emphasize }) {
   return (
     <View style={commonStyles.row}>

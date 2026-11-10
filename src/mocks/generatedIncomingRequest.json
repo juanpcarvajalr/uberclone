@@ -1,25 +1,25 @@
 {
-  "tripId": "trip_req_1794258589459",
+  "tripId": "trip_req_1794270553491",
   "driverId": null,
   "passengerId": "passenger_incoming",
   "vehicleId": null,
   "origin": {
-    "lat": 6.280302499999999,
-    "lng": -75.5963264,
-    "address": "Cra 89, Palenque, Medellín, Robledo, Medellín, Antioquia, Colombia"
+    "lat": 6.2845767,
+    "lng": -75.59784789999999,
+    "address": "Cra. 91d #72-159, Palenque, Medellín, Robledo, Medellín, Antioquia, Colombia"
   },
   "destination": {
-    "lat": 6.2040342,
-    "lng": -75.5554861,
-    "address": "El Tesoro, El Poblado, Medellín, Medellin, Antioquia, Colombia"
+    "lat": 6.1768869,
+    "lng": -75.5922337,
+    "address": "Cl. 36 Sur #49-15, Zona 1, Envigado, Antioquia, Colombia"
   },
-  "distanceKm": 15.26,
-  "durationMin": 32.2,
-  "category": "xl",
-  "fare": 41800,
-  "commission": 8360,
-  "driverEarnings": 33440,
-  "tip": 0,
+  "distanceKm": 16.26,
+  "durationMin": 30.8,
+  "category": "economy",
+  "fare": 30700,
+  "commission": 6140,
+  "tip": 2000,
+  "driverEarnings": 26560,
   "commissionRate": 0.2,
   "paymentMethod": "cash",
   "paymentStatus": "pending",
@@ -27,8 +27,7 @@
   "status": "requested",
   "rating": null,
   "routePolyline": null,
-  "routeCoordinates": null,
-  "createdAt": "2026-11-09T21:09:49.459Z",
+  "createdAt": "2026-11-10T00:29:13.491Z",
   "completedAt": null,
   "passengerName": "Pasajero"
 }

@@ -869,3 +869,88 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Archivos y commit: `ninguno` — Commit: pendiente
 - Verificación: _pendiente — sugerida: approved + category coincidente + Disponible + request-trip_
 - Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #50
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Persistir el trip en Firestore al recibir, aceptar y rechazar
+- Prompt:
+  ```text
+  Perfecto. Ahora sí: cuando llegue la solicitud desde el script, necesito que se genere el trip en Firestore. Y al aceptar o rechazar, que se actualice el estado. Recuerda basarte solamente en la SPEC y no asumir nada.
+  ```
+- Resumen de la respuesta: Se creó `tripsService` y se cableó `receiveIncomingRequest` / `acceptTrip` / `rejectTrip` para escribir `trips/{tripId}` con las transiciones de la sección 7 (`requested` → `accepted`/`rejected`, luego `driver_arriving`).
+- Qué se usó / modificado / descartado:
+  - Propuesto por la IA: servicio Firestore + `ActiveTripContext` con `onSnapshot` y `canTransition`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/services/tripsService.js`, `src/context/ActiveTripContext.js`, `src/hooks/useTripRequests.js`, `src/screens/IncomingRequestScreen.js`, `firestore.rules`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: Disponible + request-trip → ver documento en `trips` → aceptar/rechazar y confirmar `status`_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #51
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Completar el viaje hasta `completed` con tarifa final
+- Prompt:
+  ```text
+  Además, ayúdame con la parte del viaje en curso: pasajero a bordo, finalizar, y que quede completed con la tarifa. Ceñirte a la SPEC.
+  ```
+- Resumen de la respuesta: `markPassengerOnBoard` pide Directions al destino y pasa a `in_progress`; `completeTrip` recalcula con `calculateFare` y deja el viaje en `completed` con `completedAt`.
+- Qué se usó / modificado / descartado:
+  - Propuesto por la IA: transiciones en `ActiveTripContext` + handlers async en `TripInProgressScreen`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/context/ActiveTripContext.js`, `src/screens/TripInProgressScreen.js`, `src/utils/calculateFare.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: aceptar → Pasajero a bordo → Finalizar y revisar `status`/`fare` en Firestore_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #52
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Cobro solo en efectivo (`cash_received`)
+- Prompt:
+  ```text
+  Por el momento manejemos solo cash, para no complicar mucho la implementación. Que el conductor marque el efectivo recibido y el viaje quede pagado.
+  ```
+- Resumen de la respuesta: En resumen solo aparece “Marcar efectivo recibido”; `markPaid` escribe `status: paid` y `paymentStatus: cash_received`. Mercado Pago queda fuera de este tramo.
+- Qué se usó / modificado / descartado:
+  - Propuesto por la IA: flujo cash en `TripSummaryScreen` + `markPaid` según §9 Efectivo
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/context/ActiveTripContext.js`, `src/screens/TripSummaryScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: finalizar viaje → marcar efectivo → documento en `paid` / `cash_received`_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #53
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Historial y ganancias desde los viajes del conductor en Firestore
+- Prompt:
+  ```text
+  Y por último el almacenamiento de los viajes del conductor: el historial y las ganancias ya no deberían usar el mock. Que lean lo de Firestore.
+  ```
+- Resumen de la respuesta: `useEarnings`, Historial y Detalle pasan a `fetchTripsByDriver` / `fetchTripById`. El saldo se calcula (pasarela − comisión cash) sin campo guardado. Se quitó `MOCK_TRIPS` de esas pantallas.
+- Qué se usó / modificado / descartado:
+  - Propuesto por la IA: lectura Firestore en hooks/pantallas + Polyline del `routePolyline` guardado en el detalle
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/hooks/useEarnings.js`, `src/screens/TripHistoryScreen.js`, `src/screens/TripDetailScreen.js`, `src/screens/EarningsScreen.js`, `src/services/tripsService.js`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: viaje `paid` → abrir Historial/Ganancias y ver el mismo `tripId`_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #54
+- Fecha: 2026-11-09
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Actualizar `driverLocations` mientras el conductor está Disponible
+- Prompt:
+  ```text
+  También, según la SPEC, mientras esté Disponible la ubicación debería actualizarse en driverLocations. ¿Me ayudas a dejar eso cableado?
+  ```
+- Resumen de la respuesta: `upsertDriverLocation` escribe al cambiar disponibilidad/ubicación; el GPS queda montado a nivel app con `DriverLocationListener` para no cortarse al salir de Inicio.
+- Qué se usó / modificado / descartado:
+  - Propuesto por la IA: `driverLocationService` + sync en `DriverSessionContext` + listener global
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/services/driverLocationService.js`, `src/context/DriverSessionContext.js`, `src/hooks/useDriverLocation.js`, `src/components/DriverLocationListener.js`, `App.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: Disponible ON → mover GPS/emulador → ver `location`/`updatedAt` en `driverLocations/{uid}`_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_

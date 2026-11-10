@@ -7,7 +7,7 @@ export const GENDER_OPTIONS = [
 ];
 
 export const CATEGORY_OPTIONS = [
-  { value: 'economy', label: 'Economy' },
+  { value: 'economy', label: 'Económica' },
   { value: 'xl', label: 'XL' },
   { value: 'premium', label: 'Premium' },
 ];

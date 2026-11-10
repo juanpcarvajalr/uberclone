@@ -1,24 +1,13 @@
-// AI-assisted: see docs/AI_LOG.md #18, #29
+// AI-assisted: see docs/AI_LOG.md #18, #29, #50
 import React from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
-import { DrawerActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import IncomingRequestScreen from '../screens/IncomingRequestScreen';
 import TripInProgressScreen from '../screens/TripInProgressScreen';
 import TripSummaryScreen from '../screens/TripSummaryScreen';
-import { colors } from '../theme/colors';
 import { headerScreenOptions } from '../theme/navigationTheme';
 
 const Stack = createNativeStackNavigator();
-
-/**
- * Opens the parent drawer from a nested stack screen.
- * @param {object} navigation
- */
-function openDrawer(navigation) {
-  navigation.dispatch(DrawerActions.openDrawer());
-}
 
 /**
  * Trip flow stack: Home → Incoming → InProgress → Summary.
@@ -29,19 +18,7 @@ export default function TripStack() {
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={({ navigation }) => ({
-          title: 'Inicio',
-          headerLeft: () => (
-            <Pressable
-              onPress={() => openDrawer(navigation)}
-              style={styles.menuBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Abrir menú"
-            >
-              <Text style={styles.menuIcon}>☰</Text>
-            </Pressable>
-          ),
-        })}
+        options={{ title: 'Inicio' }}
       />
       <Stack.Screen
         name="IncomingRequest"
@@ -61,8 +38,3 @@ export default function TripStack() {
     </Stack.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  menuBtn: { paddingHorizontal: 12, paddingVertical: 4 },
-  menuIcon: { color: colors.onPrimary, fontSize: 22, fontWeight: '700' },
-});

@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useDriverSession } from '../context/DriverSessionContext';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import RegisterNavigator from './RegisterNavigator';
-import MainDrawer from './MainDrawer';
+import MainTabs from './MainTabs';
 import { navigationRef } from './navigationRef';
 import { colors } from '../theme/colors';
 
@@ -29,7 +29,7 @@ export default function RootNavigator() {
     return (
       <NavigationContainer ref={navigationRef}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Main" component={MainDrawer} />
+          <Stack.Screen name="Main" component={MainTabs} />
         </Stack.Navigator>
       </NavigationContainer>
     );

@@ -2,6 +2,10 @@
 import React, { useCallback } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useDriverSession } from '../context/DriverSessionContext';
+import {
+  accountStatusLabel,
+  categoryLabel,
+} from '../utils/displayLabels';
 import { commonStyles } from '../theme/commonStyles';
 
 /**
@@ -33,15 +37,18 @@ export default function ProfileSettingsScreen() {
         <Line label="Documento" value={driver.documentNumber} />
         <Line label="Celular" value={driver.phone} />
         <Line label="Correo" value={driver.email} />
-        <Line label="Estado cuenta" value={driver.accountStatus} />
-        <Line label="Mercado Pago" value={driver.mercadoPagoEmail} />
+        <Line
+          label="Estado de la cuenta"
+          value={accountStatusLabel(driver.accountStatus)}
+        />
+        <Line label="Mercado Pago" value={driver.mercadoPagoEmail || '—'} />
       </Section>
 
       <Section title="Vehículo">
         <Line label="Placa" value={vehicle.plate} />
         <Line label="Marca / modelo" value={`${vehicle.brand} ${vehicle.model}`} />
         <Line label="Año" value={String(vehicle.year)} />
-        <Line label="Categoría" value={vehicle.category} />
+        <Line label="Categoría" value={categoryLabel(vehicle.category)} />
         <Line label="Color" value={vehicle.color} />
         <Line label="Capacidad" value={String(vehicle.passengerCapacity)} />
       </Section>

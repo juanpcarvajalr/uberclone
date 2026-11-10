@@ -1,18 +1,18 @@
-// AI-assisted: see docs/AI_LOG.md #20, #27, #46
-import React, { useCallback, useState } from 'react';
+// AI-assisted: see docs/AI_LOG.md #20, #27, #46, #50
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
-import { useDriverSession } from '../context/DriverSessionContext';
 import TripRouteMap from '../components/TripRouteMap';
+import { resolveRouteCoordinates } from '../utils/routeCoordinates';
+import { errorReasonLabel } from '../utils/displayLabels';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 
 /**
- * Trip in progress: Directions to pickup, then to destination (Spec §6).
+ * Trip in progress: Directions GPS→pickup then pickup→destination, with motion sim.
  */
 export default function TripInProgressScreen({ navigation }) {
   const { trip, markPassengerOnBoard, completeTrip } = useActiveTrip();
-  const { location } = useDriverSession();
   const [busy, setBusy] = useState(false);
 
   const onBoard = useCallback(async () => {
@@ -22,7 +22,10 @@ export default function TripInProgressScreen({ navigation }) {
       if (!result?.ok) {
         Alert.alert(
           'Ruta',
-          result?.reason ?? 'No se pudo obtener la ruta al destino (Directions).'
+          errorReasonLabel(
+            result?.reason,
+            'No se pudo obtener la ruta al destino.'
+          )
         );
       }
     } finally {
@@ -30,10 +33,42 @@ export default function TripInProgressScreen({ navigation }) {
     }
   }, [markPassengerOnBoard]);
 
-  const onFinish = useCallback(() => {
-    completeTrip();
-    navigation.replace('TripSummary');
+  const onFinish = useCallback(async () => {
+    setBusy(true);
+    try {
+      const result = await completeTrip();
+      if (!result?.ok) {
+        Alert.alert(
+          'Viaje',
+          errorReasonLabel(
+            result?.reason,
+            'No se pudo finalizar el viaje.'
+          )
+        );
+        return;
+      }
+      navigation.replace('TripSummary');
+    } finally {
+      setBusy(false);
+    }
   }, [completeTrip, navigation]);
+
+  const goingToPickup =
+    trip?.status === 'accepted' || trip?.status === 'driver_arriving';
+  const target = goingToPickup ? trip?.origin : trip?.destination;
+
+  const roadCoordinates = useMemo(
+    () => resolveRouteCoordinates(trip),
+    [trip]
+  );
+
+  const durationMs = useMemo(() => {
+    const minutes = Number(trip?.durationMin);
+    if (!Number.isFinite(minutes) || minutes <= 0) {
+      return 45000;
+    }
+    return Math.min(90000, Math.max(25000, minutes * 2500));
+  }, [trip?.durationMin]);
 
   if (!trip) {
     return (
@@ -43,17 +78,15 @@ export default function TripInProgressScreen({ navigation }) {
     );
   }
 
-  const goingToPickup =
-    trip.status === 'accepted' || trip.status === 'driver_arriving';
-  const target = goingToPickup ? trip.origin : trip.destination;
-
   return (
     <View style={commonStyles.screen}>
       <TripRouteMap
-        driverLocation={location}
         target={target}
-        routeCoordinates={trip.routeCoordinates}
+        routeCoordinates={roadCoordinates}
+        routePolyline={trip.routePolyline}
         targetTitle={goingToPickup ? 'Punto de recogida' : 'Destino'}
+        simulationKey={`${trip.tripId}:${trip.status}:${trip.routePolyline ?? ''}`}
+        durationMs={durationMs}
       />
 
       <View style={commonStyles.panel}>

@@ -1,34 +1,52 @@
-// AI-assisted: see docs/AI_LOG.md #46
+// AI-assisted: see docs/AI_LOG.md #46, #50
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { useRouteSimulation } from '../hooks/useRouteSimulation';
+import { resolveRouteCoordinates } from '../utils/routeCoordinates';
 import { MAPS } from '../config/maps';
 import { colors } from '../theme/colors';
+import { commonStyles } from '../theme/commonStyles';
 
 /**
- * Map for an active trip: driver, target place and Directions polyline.
+ * Map for an active trip: road polyline from Directions + simulated vehicle motion.
  * @param {{
- *   driverLocation: { lat: number, lng: number },
  *   target: { lat: number, lng: number, address?: string },
  *   routeCoordinates?: { latitude: number, longitude: number }[] | null,
+ *   routePolyline?: string | null,
  *   targetTitle?: string,
+ *   simulationKey?: string|number|null,
+ *   durationMs?: number,
  * }} props
  */
 export default function TripRouteMap({
-  driverLocation,
   target,
   routeCoordinates = null,
+  routePolyline = null,
   targetTitle = 'Destino',
+  simulationKey = null,
+  durationMs = 45000,
 }) {
   const mapRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
+  const [tracksVehicle, setTracksVehicle] = useState(true);
 
-  const driverCoord = useMemo(
-    () => ({
-      latitude: Number(driverLocation?.lat) || 0,
-      longitude: Number(driverLocation?.lng) || 0,
-    }),
-    [driverLocation]
+  const roadCoordinates = useMemo(
+    () =>
+      resolveRouteCoordinates({
+        routeCoordinates,
+        routePolyline,
+      }),
+    [routeCoordinates, routePolyline]
+  );
+
+  const { position: vehiclePosition, heading } = useRouteSimulation(
+    roadCoordinates,
+    {
+      playing: Boolean(roadCoordinates && roadCoordinates.length > 1),
+      durationMs,
+      resetKey: simulationKey ?? `${routePolyline ?? ''}:${roadCoordinates?.length ?? 0}`,
+    }
   );
 
   const targetCoord = useMemo(
@@ -39,25 +57,63 @@ export default function TripRouteMap({
     [target]
   );
 
-  const coordinates = useMemo(() => {
-    if (Array.isArray(routeCoordinates) && routeCoordinates.length > 1) {
-      return routeCoordinates;
+  const initialCoord = useMemo(() => {
+    if (roadCoordinates?.[0]) {
+      return roadCoordinates[0];
     }
-    return [driverCoord, targetCoord];
-  }, [routeCoordinates, driverCoord, targetCoord]);
+    return targetCoord;
+  }, [roadCoordinates, targetCoord]);
 
   useEffect(() => {
-    if (!mapReady || !mapRef.current || coordinates.length < 2) {
+    if (!mapReady || !mapRef.current || !roadCoordinates || roadCoordinates.length < 2) {
       return undefined;
     }
     const timer = setTimeout(() => {
-      mapRef.current?.fitToCoordinates(coordinates, {
-        edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
+      mapRef.current?.fitToCoordinates(roadCoordinates, {
+        edgePadding: { top: 56, right: 48, bottom: 56, left: 48 },
         animated: true,
       });
-    }, 100);
+    }, 120);
     return () => clearTimeout(timer);
-  }, [mapReady, coordinates]);
+  }, [mapReady, roadCoordinates]);
+
+  useEffect(() => {
+    setTracksVehicle(true);
+    const timer = setTimeout(() => setTracksVehicle(false), 700);
+    return () => clearTimeout(timer);
+  }, [simulationKey, routePolyline]);
+
+  const lastCameraAtRef = useRef(0);
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !vehiclePosition) {
+      return undefined;
+    }
+    const now = Date.now();
+    if (now - lastCameraAtRef.current < 400) {
+      return undefined;
+    }
+    lastCameraAtRef.current = now;
+    mapRef.current.animateCamera(
+      {
+        center: vehiclePosition,
+        heading,
+        pitch: 0,
+        zoom: 15,
+      },
+      { duration: 350 }
+    );
+    return undefined;
+  }, [mapReady, vehiclePosition, heading]);
+
+  if (!roadCoordinates || roadCoordinates.length < 2) {
+    return (
+      <View style={[styles.container, styles.centered]} collapsable={false}>
+        <Text style={commonStyles.muted}>
+          Esperando ruta por vías (Directions)…
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container} collapsable={false}>
@@ -66,7 +122,7 @@ export default function TripRouteMap({
         style={styles.map}
         provider={PROVIDER_GOOGLE}
         initialRegion={{
-          ...driverCoord,
+          ...initialCoord,
           ...MAPS.defaultDelta,
         }}
         onMapReady={() => setMapReady(true)}
@@ -74,17 +130,28 @@ export default function TripRouteMap({
         toolbarEnabled={false}
         googleRenderer="LATEST"
       >
-        <Marker coordinate={driverCoord} title="Conductor" pinColor={colors.accent} />
+        <Polyline
+          coordinates={roadCoordinates}
+          strokeColor={colors.primary}
+          strokeWidth={5}
+        />
         <Marker
           coordinate={targetCoord}
           title={targetTitle}
           description={target?.address}
         />
-        <Polyline
-          coordinates={coordinates}
-          strokeColor={colors.primary}
-          strokeWidth={4}
-        />
+        {vehiclePosition ? (
+          <Marker
+            coordinate={vehiclePosition}
+            title="Vehículo"
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={tracksVehicle}
+          >
+            <View style={styles.vehicleRing}>
+              <View style={styles.vehicleCore} />
+            </View>
+          </Marker>
+        ) : null}
       </MapView>
     </View>
   );
@@ -96,9 +163,35 @@ const styles = StyleSheet.create({
     minHeight: 240,
     backgroundColor: colors.mapStub,
   },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
   map: {
     flex: 1,
     width: '100%',
     minHeight: 240,
+  },
+  vehicleRing: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 3,
+    borderColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 4,
+  },
+  vehicleCore: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.accent,
   },
 });

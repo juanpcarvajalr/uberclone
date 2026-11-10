@@ -1,6 +1,7 @@
-// AI-assisted: see docs/AI_LOG.md #15, #27
-import React, { useState } from 'react';
+// AI-assisted: see docs/AI_LOG.md #15, #27, #50
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useEarnings } from '../hooks/useEarnings';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
@@ -13,24 +14,32 @@ const PERIODS = [
 ];
 
 /**
- * Earnings dashboard over mock trips (today / week / month + balance).
+ * Earnings dashboard from Firestore paid trips (Spec 10).
  */
 export default function EarningsScreen() {
-  const { today, week, month, balance } = useEarnings();
+  const navigation = useNavigation();
+  const { today, week, month, balance, loading, refresh } = useEarnings();
   const [period, setPeriod] = useState('today');
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', refresh);
+    return unsubscribe;
+  }, [navigation, refresh]);
 
   const summary = period === 'today' ? today : period === 'week' ? week : month;
 
   return (
     <ScrollView style={commonStyles.screen} contentContainerStyle={commonStyles.content}>
-      {/* AI-assisted: see docs/AI_LOG.md #15, #27 */}
       <Text style={commonStyles.title}>Ganancias</Text>
+      {loading ? (
+        <Text style={commonStyles.muted}>Cargando viajes…</Text>
+      ) : null}
 
       <View style={commonStyles.balanceCard}>
         <Text style={commonStyles.balanceLabel}>Saldo del conductor</Text>
         <Text style={commonStyles.balanceValue}>${balance.toLocaleString('es-CO')}</Text>
         <Text style={styles.hint}>
-          Pasarela − comisiones de efectivo (calculado desde trips)
+          Ganancias por pasarela menos comisiones de viajes en efectivo
         </Text>
       </View>
 

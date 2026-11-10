@@ -86,17 +86,18 @@ export function buildTripRequest(input = {}) {
     }
 
     if (!Number.isFinite(tip) || tip < 0) {
-      throw new Error('tip must be a non-negative number');
+      throw new Error('tip must be a non-negative number (COP)');
     }
+    const tipCop = Math.round(tip);
 
     const breakdown = calculateFare({
       distanceKm,
       durationMin,
       category,
-      tip,
+      tip: tipCop,
     });
 
-    return {
+    const tripRequest = {
       tripId: input.tripId ?? `trip_req_${Date.now()}`,
       driverId: input.driverId ?? null,
       passengerId: input.passengerId ?? 'passenger_incoming',
@@ -106,21 +107,83 @@ export function buildTripRequest(input = {}) {
       distanceKm,
       durationMin,
       category,
-      ...breakdown,
-      tip,
-      commissionRate: PRICING.commissionRate,
+      fare: breakdown.fare,
+      commission: breakdown.commission,
+      tip: tipCop,
+      driverEarnings: breakdown.driverEarnings,
+      commissionRate: breakdown.commissionRate ?? PRICING.commissionRate,
       paymentMethod,
       paymentStatus: 'pending',
       paymentId: null,
       status: 'requested',
       rating: null,
       routePolyline: null,
-      routeCoordinates: null,
       createdAt: new Date().toISOString(),
       completedAt: null,
       passengerName: input.passengerName ?? 'Pasajero',
     };
+
+    assertIncomingRequestPayload(tripRequest);
+    return tripRequest;
   } catch (error) {
     throw error instanceof Error ? error : new Error(String(error));
+  }
+}
+
+/**
+ * Ensures the passenger request carries Spec 6.2 UI fields + 11 trip model.
+ * @param {object} trip
+ * @returns {void}
+ */
+export function assertIncomingRequestPayload(trip) {
+  const requiredUi = [
+    ['origin.address', trip?.origin?.address],
+    ['destination.address', trip?.destination?.address],
+    ['distanceKm', trip?.distanceKm],
+    ['durationMin', trip?.durationMin],
+    ['category', trip?.category],
+    ['paymentMethod', trip?.paymentMethod],
+    ['fare', trip?.fare],
+    ['driverEarnings', trip?.driverEarnings],
+  ];
+
+  for (const [label, value] of requiredUi) {
+    if (value == null || value === '') {
+      throw new Error(`Incoming request missing Spec 6.2 field: ${label}`);
+    }
+  }
+
+  const requiredModel = [
+    'tripId',
+    'passengerId',
+    'origin',
+    'destination',
+    'fare',
+    'commission',
+    'tip',
+    'driverEarnings',
+    'commissionRate',
+    'paymentStatus',
+    'status',
+    'createdAt',
+  ];
+
+  for (const key of requiredModel) {
+    if (trip?.[key] == null) {
+      throw new Error(`Incoming request missing Spec 11 field: ${key}`);
+    }
+  }
+
+  if (trip.status !== 'requested') {
+    throw new Error('Incoming request status must be "requested"');
+  }
+
+  if (
+    !Number.isFinite(Number(trip.origin?.lat)) ||
+    !Number.isFinite(Number(trip.origin?.lng)) ||
+    !Number.isFinite(Number(trip.destination?.lat)) ||
+    !Number.isFinite(Number(trip.destination?.lng))
+  ) {
+    throw new Error('origin/destination must include lat/lng (Spec 11)');
   }
 }

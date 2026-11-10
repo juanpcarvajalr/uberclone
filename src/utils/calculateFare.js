@@ -13,7 +13,12 @@ export function roundTo100(amount) {
 /**
  * Pure fare calculator shared by passenger and driver flows.
  * @param {{ distanceKm: number, durationMin: number, category: string, tip?: number }} params
- * @returns {{ fare: number, commission: number, driverEarnings: number }}
+ * @returns {{
+ *   fare: number,
+ *   commission: number,
+ *   driverEarnings: number,
+ *   commissionRate: number,
+ * }}
  */
 export function calculateFare({ distanceKm, durationMin, category, tip = 0 }) {
   const multiplier = PRICING.categoryMultipliers[category] ?? 1;
@@ -21,7 +26,8 @@ export function calculateFare({ distanceKm, durationMin, category, tip = 0 }) {
     (PRICING.baseFare + distanceKm * PRICING.perKm + durationMin * PRICING.perMin) *
     multiplier;
   const fare = roundTo100(Math.max(PRICING.minimumFare, fareRaw));
-  const commission = Math.round(fare * PRICING.commissionRate);
+  const commissionRate = PRICING.commissionRate;
+  const commission = Math.round(fare * commissionRate);
   const driverEarnings = fare - commission + tip;
-  return { fare, commission, driverEarnings };
+  return { fare, commission, driverEarnings, commissionRate };
 }

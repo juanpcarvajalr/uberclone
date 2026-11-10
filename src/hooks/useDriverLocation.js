@@ -1,5 +1,5 @@
-// AI-assisted: see docs/AI_LOG.md #42, #43
-import { useEffect, useState } from 'react';
+// AI-assisted: see docs/AI_LOG.md #42, #43, #50
+import { useEffect } from 'react';
 import { PermissionsAndroid, Platform } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { useDriverSession } from '../context/DriverSessionContext';
@@ -42,13 +42,19 @@ async function requestLocationPermission() {
 }
 
 /**
- * Keeps the map on the device GPS via watchPosition.
- * Availability only controls whether the driver is "en seguimiento".
+ * Keeps session location on device GPS via watchPosition (Spec 6 / 12).
+ * Availability controls writes to driverLocations, not the GPS watch itself.
  */
 export function useDriverLocation() {
-  const { isAvailable, location, updateLocation } = useDriverSession();
-  const [hasPermission, setHasPermission] = useState(false);
-  const [hasRealFix, setHasRealFix] = useState(false);
+  const {
+    isAvailable,
+    location,
+    hasLocationPermission,
+    hasRealFix,
+    updateLocation,
+    setLocationPermission,
+    setLocationRealFix,
+  } = useDriverSession();
 
   useEffect(() => {
     let cancelled = false;
@@ -67,12 +73,12 @@ export function useDriverLocation() {
           return;
         }
 
-        setHasPermission(true);
+        setLocationPermission(true);
 
         Geolocation.getCurrentPosition(
           (fix) => {
             if (cancelled || !fix?.coords) return;
-            setHasRealFix(true);
+            setLocationRealFix(true);
             updateLocation(toLatLng(fix.coords));
           },
           () => {},
@@ -86,7 +92,7 @@ export function useDriverLocation() {
         watchId = Geolocation.watchPosition(
           (fix) => {
             if (!fix?.coords) return;
-            setHasRealFix(true);
+            setLocationRealFix(true);
             updateLocation(toLatLng(fix.coords));
           },
           () => {},
@@ -110,12 +116,12 @@ export function useDriverLocation() {
         Geolocation.clearWatch(watchId);
       }
     };
-  }, [updateLocation]);
+  }, [updateLocation, setLocationPermission, setLocationRealFix]);
 
   return {
     location,
     isTracking: isAvailable,
-    hasPermission,
+    hasPermission: hasLocationPermission,
     hasRealFix,
   };
 }

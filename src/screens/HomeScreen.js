@@ -1,22 +1,30 @@
+// AI-assisted: see docs/AI_LOG.md #16, #42, #50
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, Switch, Pressable, Alert } from 'react-native';
-import { DrawerActions } from '@react-navigation/native';
+import { View, Text, StyleSheet, Switch, Alert } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import DriverMap from '../components/DriverMap';
 import { useDriverSession } from '../context/DriverSessionContext';
 import { useActiveTrip } from '../context/ActiveTripContext';
-import { useDriverLocation } from '../hooks/useDriverLocation';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 import { spacing } from '../theme/tokens';
 
 /**
  * Home screen: map and availability toggle.
- * Incoming requests arrive from the passenger script (see README).
  */
 export default function HomeScreen({ navigation }) {
-  const { driver, isAvailable, setAvailability } = useDriverSession();
+  const {
+    driver,
+    isAvailable,
+    setAvailability,
+    location,
+    hasLocationPermission,
+    hasRealFix,
+  } = useDriverSession();
   const { phase } = useActiveTrip();
-  const { location, isTracking, hasPermission, hasRealFix } = useDriverLocation();
+  const isFocused = useIsFocused();
+  const isTracking = isAvailable;
+  const hasPermission = hasLocationPermission;
 
   const onToggle = useCallback(
     async (value) => {
@@ -24,18 +32,17 @@ export default function HomeScreen({ navigation }) {
       if (!result.ok) {
         Alert.alert(
           'Cuenta pendiente',
-          'No puedes ponerte Disponible hasta que accountStatus sea approved.'
+          'No puedes ponerte Disponible hasta que la cuenta esté aprobada.'
         );
       }
     },
     [setAvailability]
   );
 
-  const onOpenMenu = useCallback(() => {
-    navigation.dispatch(DrawerActions.openDrawer());
-  }, [navigation]);
-
   React.useEffect(() => {
+    if (!isFocused) {
+      return undefined;
+    }
     if (phase === 'incoming') {
       navigation.navigate('IncomingRequest');
     } else if (phase === 'active') {
@@ -43,7 +50,8 @@ export default function HomeScreen({ navigation }) {
     } else if (phase === 'summary') {
       navigation.navigate('TripSummary');
     }
-  }, [phase, navigation]);
+    return undefined;
+  }, [phase, navigation, isFocused]);
 
   return (
     <View style={commonStyles.screen}>
@@ -78,11 +86,9 @@ export default function HomeScreen({ navigation }) {
           />
         </View>
         <Text style={[commonStyles.caption, styles.hint]}>
-          Las solicitudes llegan con el script request-trip (misma categoría).
+          Las solicitudes llegan con el script request-trip (misma categoría). Usa
+          el menú inferior para Ganancias, Historial y Perfil.
         </Text>
-        <Pressable style={commonStyles.outlineButton} onPress={onOpenMenu}>
-          <Text style={commonStyles.outlineButtonText}>Abrir menú</Text>
-        </Pressable>
       </View>
     </View>
   );

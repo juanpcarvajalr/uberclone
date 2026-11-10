@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #9, #28, #41
+// AI-assisted: see docs/AI_LOG.md #9, #28, #41, #50
 import React, {
   createContext,
   useCallback,
@@ -9,9 +9,10 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../config/firebaseConfig';
 import { MOCK_DRIVER_LOCATION } from '../mocks/driver';
+import { upsertDriverLocation } from '../services/driverLocationService';
 
 const DriverSessionContext = createContext(null);
 
@@ -28,6 +29,8 @@ export function DriverSessionProvider({ children }) {
   const [vehicle, setVehicle] = useState(null);
   const [isAvailable, setIsAvailable] = useState(false);
   const [location, setLocation] = useState(MOCK_DRIVER_LOCATION.location);
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [hasRealFix, setHasRealFix] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasCompletedRegistration, setHasCompletedRegistration] = useState(false);
   const [authReady, setAuthReady] = useState(false);
@@ -55,7 +58,7 @@ export function DriverSessionProvider({ children }) {
           return;
         }
 
-        const driverData = { uid: user.uid, ...driverSnap.data() };
+        const driverData = { ...driverSnap.data(), uid: user.uid };
         let nextVehicle = null;
 
         if (driverData.vehicleId) {
@@ -98,11 +101,52 @@ export function DriverSessionProvider({ children }) {
       if (!snap.exists()) {
         return;
       }
-      setDriver((prev) => ({ ...(prev ?? {}), uid: snap.id, ...snap.data() }));
+      setDriver((prev) => ({ ...(prev ?? {}), ...snap.data(), uid: snap.id }));
     });
 
     return () => unsubscribe();
   }, [driver?.uid]);
+
+  useEffect(() => {
+    const vehicleId = driver?.vehicleId;
+    if (!vehicleId) {
+      return undefined;
+    }
+
+    const unsubscribe = onSnapshot(doc(db, 'vehicles', vehicleId), (snap) => {
+      if (!snap.exists()) {
+        return;
+      }
+      setVehicle({ vehicleId: snap.id, ...snap.data() });
+    });
+
+    return () => unsubscribe();
+  }, [driver?.vehicleId]);
+
+  useEffect(() => {
+    if (!driver?.uid || !isAvailable) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        if (cancelled) return;
+        await upsertDriverLocation({
+          uid: driver.uid,
+          isAvailable: true,
+          location,
+          category: vehicle?.category ?? 'economy',
+        });
+      } catch {
+        // ignore transient location writes
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [driver?.uid, isAvailable, location, vehicle?.category]);
 
   const setAvailability = useCallback(async (next) => {
     if (driver?.accountStatus !== 'approved' && next) {
@@ -117,18 +161,14 @@ export function DriverSessionProvider({ children }) {
       // ignore
     }
 
-    if (next && driver?.uid) {
+    if (driver?.uid) {
       try {
-        await setDoc(
-          doc(db, 'driverLocations', driver.uid),
-          {
-            isAvailable: true,
-            location,
-            category: vehicle?.category ?? 'economy',
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
+        await upsertDriverLocation({
+          uid: driver.uid,
+          isAvailable: next,
+          location,
+          category: vehicle?.category ?? 'economy',
+        });
       } catch {
         // ignore
       }
@@ -139,6 +179,14 @@ export function DriverSessionProvider({ children }) {
 
   const updateLocation = useCallback((coords) => {
     setLocation(coords);
+  }, []);
+
+  const setLocationPermission = useCallback((granted) => {
+    setHasLocationPermission(Boolean(granted));
+  }, []);
+
+  const setLocationRealFix = useCallback((value) => {
+    setHasRealFix(Boolean(value));
   }, []);
 
   const applyRegistrationResult = useCallback((result) => {
@@ -188,11 +236,15 @@ export function DriverSessionProvider({ children }) {
       },
       isAvailable,
       location,
+      hasLocationPermission,
+      hasRealFix,
       isAuthenticated,
       hasCompletedRegistration,
       authReady,
       setAvailability,
       updateLocation,
+      setLocationPermission,
+      setLocationRealFix,
       applyRegistrationResult,
       signOut,
       setHasCompletedRegistration,
@@ -202,11 +254,15 @@ export function DriverSessionProvider({ children }) {
       vehicle,
       isAvailable,
       location,
+      hasLocationPermission,
+      hasRealFix,
       isAuthenticated,
       hasCompletedRegistration,
       authReady,
       setAvailability,
       updateLocation,
+      setLocationPermission,
+      setLocationRealFix,
       applyRegistrationResult,
       signOut,
     ]
