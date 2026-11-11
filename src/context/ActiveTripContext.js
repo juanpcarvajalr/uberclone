@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #4, #44, #46, #50
+// AI-assisted: see docs/AI_LOG.md #4, #44, #46, #50, #58, #66
 import React, {
   createContext,
   useCallback,
@@ -142,8 +142,13 @@ export function ActiveTripProvider({ children }) {
       if (!tripRequest || typeof tripRequest !== 'object') {
         throw new Error('tripRequest is required');
       }
-      if (tripRequest.paymentMethod !== 'cash') {
-        throw new Error('Por ahora solo está habilitado el cobro en efectivo.');
+      if (
+        tripRequest.paymentMethod !== 'cash' &&
+        tripRequest.paymentMethod !== 'mercadopago'
+      ) {
+        throw new Error(
+          'Método de pago no soportado. Usa cash o mercadopago.'
+        );
       }
 
       const payload = {
@@ -391,6 +396,27 @@ export function ActiveTripProvider({ children }) {
     }
   }, [state.trip]);
 
+  const cancelTrip = useCallback(async () => {
+    try {
+      const trip = state.trip;
+      if (!trip) {
+        return { ok: false, reason: 'no_trip' };
+      }
+      if (!canTransition(trip.status, 'cancelled')) {
+        return { ok: false, reason: 'cancel_not_allowed' };
+      }
+
+      await updateTrip(trip.tripId, { status: 'cancelled' });
+      dispatch({ type: 'CLEAR' });
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        reason: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }, [state.trip]);
+
   const clearTrip = useCallback(() => {
     dispatch({ type: 'CLEAR' });
   }, []);
@@ -405,6 +431,7 @@ export function ActiveTripProvider({ children }) {
       markPassengerOnBoard,
       completeTrip,
       markPaid,
+      cancelTrip,
       clearTrip,
     }),
     [
@@ -416,6 +443,7 @@ export function ActiveTripProvider({ children }) {
       markPassengerOnBoard,
       completeTrip,
       markPaid,
+      cancelTrip,
       clearTrip,
     ]
   );

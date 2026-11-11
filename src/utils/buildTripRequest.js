@@ -3,7 +3,7 @@ import { PRICING } from '../config/pricing';
 import { calculateFare } from './calculateFare';
 
 export const TRIP_REQUEST_CATEGORIES = ['economy', 'xl', 'premium'];
-export const TRIP_REQUEST_PAYMENT_METHODS = ['mercadopago', 'stripe', 'cash'];
+export const TRIP_REQUEST_PAYMENT_METHODS = ['mercadopago', 'cash'];
 
 /**
  * @typedef {object} TripPlace
@@ -24,7 +24,7 @@ export const TRIP_REQUEST_PAYMENT_METHODS = ['mercadopago', 'stripe', 'cash'];
  * @property {number} durationMin
  * @property {'economy'|'xl'|'premium'} category
  * @property {number} [tip]
- * @property {'mercadopago'|'stripe'|'cash'} paymentMethod
+ * @property {'mercadopago'|'cash'} paymentMethod
  * @property {string} [passengerName]
  */
 

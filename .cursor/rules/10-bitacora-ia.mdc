@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Protocolo de bitácora de IA (OBLIGATORIO)
 
-Usar IA está permitido; **no declararlo es falta de honestidad académica**. Cada respuesta tuya en este repositorio debe quedar registrada en `docs/AI_LOG.md`, **salvo** que el integrante diga explícitamente que esa solicitud no debe incluirse en el log (ver skill `bitacora-ia` §A.0). Para el procedimiento detallado, usar la skill `bitacora-ia` si está disponible.
+Usar IA está permitido; **no declararlo es falta de honestidad académica**. Cada respuesta tuya en este repositorio debe quedar registrada en `docs/AI_LOG.md`, **salvo** que el integrante diga explícitamente que esa solicitud no debe incluirse en el log (ver skill `bitacora-ia` A.0). Para el procedimiento detallado, usar la skill `bitacora-ia` si está disponible.
 
 Contexto: proyecto **individual**. Se trabaja directamente sobre `main`, sin ramas ni Pull Requests.
 
@@ -47,7 +47,7 @@ En cualquier otro caso, agregar la entrada **al final del archivo**, con esta pl
 
 Reglas de contenido:
 - El **Prompt** es literal. Si el mensaje incluye secretos o datos personales reales, reemplazarlos por `[REDACTADO]` y avisar.
-- **Tono:** Objetivo, Resumen y (si aplica) Decisión/Verificación/Aprendizaje deben sonar a trabajo conjunto sobre una duda o error concreto — no a “la IA entregó el módulo” ni a chat informal exagerado. Imitar el registro real del integrante (skill `bitacora-ia` §E.0–E.1): español directo, sobrio, sin emojis ni slang.
+- **Tono:** Objetivo, Resumen y (si aplica) Decisión/Verificación/Aprendizaje deben sonar a trabajo conjunto sobre una duda o error concreto — no a “la IA entregó el módulo” ni a chat informal exagerado. Imitar el registro real del integrante (skill `bitacora-ia` E.0–E.1): español directo, sobrio, sin emojis ni slang.
 - **No escribir** Aprendizaje ni dar por hecha la Verificación, salvo que el integrante pida explícitamente completarlos (entonces: primera persona, estilo sección E de la skill). Si no lo pide, la IA solo sugiere cómo verificar en el placeholder.
 - Consultas sin cambios de código también se registran (Archivos: `ninguno`).
 - Una entrada por solicitud del integrante, no una por archivo.

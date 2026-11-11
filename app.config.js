@@ -54,6 +54,7 @@ module.exports = () => ({
         ...(appJson.expo.android?.permissions ?? []),
         'ACCESS_COARSE_LOCATION',
         'ACCESS_FINE_LOCATION',
+        'POST_NOTIFICATIONS',
       ],
     },
     plugins: [

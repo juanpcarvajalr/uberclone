@@ -76,7 +76,7 @@ calculates fare, and offers the request to a matching driver category.
 
 Required:
   --category <economy|xl|premium>
-  --payment <mercadopago|stripe|cash>
+  --payment <mercadopago|cash>
   --origin <address>
   --destination <address>
 
@@ -88,6 +88,7 @@ Optional:
   --print                  Print only (no file / push / inbox)
   --no-push                Skip Firestore push
   --no-inbox               Skip local HTTP inbox
+  --no-fcm                 Skip backend FCM notify to available drivers
   --help
 
 Examples (use --key=value so spaces survive npm):
@@ -182,6 +183,39 @@ async function pushToFirestore(tripRequest) {
       `Firestore push skipped: ${error instanceof Error ? error.message : String(error)}`
     );
     return false;
+  }
+}
+
+/**
+ * Asks the local backend to FCM-notify available drivers for this category.
+ * @param {string} category
+ * @returns {Promise<void>}
+ */
+async function notifyDriversViaBackend(category) {
+  try {
+    const response = await fetch('http://127.0.0.1:8787/notifications/trip-request', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        category,
+        title: 'Nueva solicitud',
+        body: 'Tienes una solicitud de viaje entrante.',
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload?.ok === false) {
+      throw new Error(payload?.error || `HTTP ${response.status}`);
+    }
+    console.log(
+      `FCM notify: sent=${payload.sent ?? 0} skipped=${payload.skipped ?? 0}`
+    );
+  } catch (error) {
+    console.warn(
+      `FCM notify skipped: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -366,6 +400,10 @@ async function main() {
 
     if (!args['no-push']) {
       await pushToFirestore(tripRequest);
+    }
+
+    if (!args['no-fcm']) {
+      await notifyDriversViaBackend(tripRequest.category);
     }
 
     if (!args['no-inbox']) {

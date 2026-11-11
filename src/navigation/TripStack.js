@@ -1,10 +1,11 @@
-// AI-assisted: see docs/AI_LOG.md #18, #29, #50
+// AI-assisted: see docs/AI_LOG.md #18, #29, #50, #58
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import IncomingRequestScreen from '../screens/IncomingRequestScreen';
 import TripInProgressScreen from '../screens/TripInProgressScreen';
 import TripSummaryScreen from '../screens/TripSummaryScreen';
+import MercadoPagoCheckoutScreen from '../screens/MercadoPagoCheckoutScreen';
 import { headerScreenOptions } from '../theme/navigationTheme';
 
 const Stack = createNativeStackNavigator();
@@ -34,6 +35,11 @@ export default function TripStack() {
         name="TripSummary"
         component={TripSummaryScreen}
         options={{ title: 'Resumen', headerBackVisible: false }}
+      />
+      <Stack.Screen
+        name="MercadoPagoCheckout"
+        component={MercadoPagoCheckoutScreen}
+        options={{ title: 'Mercado Pago' }}
       />
     </Stack.Navigator>
   );

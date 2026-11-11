@@ -1,9 +1,10 @@
-// AI-assisted: see docs/AI_LOG.md #20, #27, #46, #50
+// AI-assisted: see docs/AI_LOG.md #20, #27, #46, #50, #66
 import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import TripRouteMap from '../components/TripRouteMap';
 import { resolveRouteCoordinates } from '../utils/routeCoordinates';
+import { canTransition } from '../utils/canTransition';
 import { errorReasonLabel } from '../utils/displayLabels';
 import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
@@ -12,8 +13,12 @@ import { commonStyles } from '../theme/commonStyles';
  * Trip in progress: Directions GPS→pickup then pickup→destination, with motion sim.
  */
 export default function TripInProgressScreen({ navigation }) {
-  const { trip, markPassengerOnBoard, completeTrip } = useActiveTrip();
+  const { trip, markPassengerOnBoard, completeTrip, cancelTrip } = useActiveTrip();
   const [busy, setBusy] = useState(false);
+
+  const canCancel = Boolean(
+    trip?.status && canTransition(trip.status, 'cancelled')
+  );
 
   const onBoard = useCallback(async () => {
     setBusy(true);
@@ -52,6 +57,39 @@ export default function TripInProgressScreen({ navigation }) {
       setBusy(false);
     }
   }, [completeTrip, navigation]);
+
+  const onCancel = useCallback(() => {
+    Alert.alert(
+      'Cancelar viaje',
+      '¿Seguro que quieres cancelar este viaje?',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Sí, cancelar',
+          style: 'destructive',
+          onPress: async () => {
+            setBusy(true);
+            try {
+              const result = await cancelTrip();
+              if (!result?.ok) {
+                Alert.alert(
+                  'Viaje',
+                  errorReasonLabel(
+                    result?.reason,
+                    'No se pudo cancelar el viaje.'
+                  )
+                );
+                return;
+              }
+              navigation.navigate('Home');
+            } finally {
+              setBusy(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [cancelTrip, navigation]);
 
   const goingToPickup =
     trip?.status === 'accepted' || trip?.status === 'driver_arriving';
@@ -109,6 +147,11 @@ export default function TripInProgressScreen({ navigation }) {
             <Text style={commonStyles.primaryButtonText}>Finalizar viaje</Text>
           </Pressable>
         )}
+        {canCancel && !busy ? (
+          <Pressable style={commonStyles.dangerButton} onPress={onCancel}>
+            <Text style={commonStyles.primaryButtonText}>Cancelar viaje</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );

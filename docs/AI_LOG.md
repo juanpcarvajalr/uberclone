@@ -864,7 +864,7 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
   ```
 - Resumen de la respuesta: El registro crea drivers/vehicles/driverLocations. En consola solo hay que aprobar `accountStatus` y, si se prueba, alinear `vehicles.category` con el script. `trips` aún no lo escribe el flujo simulado; historial/ganancias siguen en mock. Publicar `firestore.rules` (incl. `devTriggers` si se usa push).
 - Qué se usó / modificó / descartó:
-  - Propuesto por la IA: guía operativa de Firestore según §5 y §11
+  - Propuesto por la IA: guía operativa de Firestore según secciones 5 y 11
   - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
 - Archivos y commit: `ninguno` — Commit: pendiente
 - Verificación: _pendiente — sugerida: approved + category coincidente + Disponible + request-trip_
@@ -915,7 +915,7 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
   ```
 - Resumen de la respuesta: En resumen solo aparece “Marcar efectivo recibido”; `markPaid` escribe `status: paid` y `paymentStatus: cash_received`. Mercado Pago queda fuera de este tramo.
 - Qué se usó / modificado / descartado:
-  - Propuesto por la IA: flujo cash en `TripSummaryScreen` + `markPaid` según §9 Efectivo
+  - Propuesto por la IA: flujo cash en `TripSummaryScreen` + `markPaid` según sección 9 Efectivo
   - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
 - Archivos y commit: `src/context/ActiveTripContext.js`, `src/screens/TripSummaryScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
 - Verificación: _pendiente — sugerida: finalizar viaje → marcar efectivo → documento en `paid` / `cash_received`_
@@ -953,4 +953,260 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
   - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
 - Archivos y commit: `src/services/driverLocationService.js`, `src/context/DriverSessionContext.js`, `src/hooks/useDriverLocation.js`, `src/components/DriverLocationListener.js`, `App.js`, `docs/AI_LOG.md` — Commit: pendiente
 - Verificación: _pendiente — sugerida: Disponible ON → mover GPS/emulador → ver `location`/`updatedAt` en `driverLocations/{uid}`_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #55
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Quitar Stripe y dejar solo Mercado Pago + efectivo
+- Prompt:
+  ```text
+  Vamos a usar solamente Mercado Pago y no Stripe, así que elimina todo lo relacionado.
+  ```
+- Resumen de la respuesta: Se quitó Stripe de filtros, validadores, mocks, README y SPEC; `paymentMethod` queda en `mercadopago` | `cash`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: limpieza en app/docs/reglas de seguridad
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/utils/displayLabels.js`, `src/utils/buildTripRequest.js`, `src/screens/TripHistoryScreen.js`, `src/mocks/trips.js`, `scripts/createTripRequest.mjs`, `docs/PROJECT_SPEC.md`, `PROJECT_SPEC.md`, `README.md`, `.cursor/rules/20-seguridad.mdc`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `rg stripe` sin usos funcionales; script con `--payment=mercadopago|cash`_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #56
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Backend Express con Checkout Pro vía Orders
+- Prompt:
+  ```text
+  La variable de entorno de MercadoPago se llama así y está en /backend MP_ACCESS_TOKEN. ¿Cómo armo el backend para crear la orden según la SPEC?
+  ```
+- Resumen de la respuesta: Se creó Express en `backend/` con `POST /payments/mercadopago/checkout` usando la API de Orders (`checkout_url`, no Preferences) y página de retorno.
+- Qué se usó / modificado / descartó:
+  - Propuesto por la IA: `backend/src/server.js`, `mercadopagoOrders.js`, `config.js`, `.env.example`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `backend/package.json`, `backend/.env.example`, `backend/src/config.js`, `backend/src/mercadopagoOrders.js`, `backend/src/server.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `npm --prefix backend start` con `MP_ACCESS_TOKEN` y cuenta de servicio Firebase_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #57
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Que solo el backend marque el viaje como pagado tras verificar en MP
+- Prompt:
+  ```text
+  Además, según la SPEC el backend tiene que verificar el estado del pago antes de actualizar el viaje. ¿Me ayudas con eso?
+  ```
+- Resumen de la respuesta: `verify` y webhook consultan `GET /v1/orders/{id}`; si `processed`/`accredited`, Admin SDK escribe `paymentStatus: approved`, `paymentId` y `status: paid`.
+- Qué se usó / modificado / descartó:
+  - Propuesto por la IA: `firestoreAdmin.js`, `tripPayments.js`, rutas verify/webhook
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `backend/src/firestoreAdmin.js`, `backend/src/tripPayments.js`, `backend/src/server.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: viaje `completed` + orden acreditada → documento `paid`/`approved` en Firestore_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #58
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Abrir Checkout Pro desde el resumen del conductor
+- Prompt:
+  ```text
+  Perfecto. Ahora sí: en el resumen necesito poder pagar con Mercado Pago, no solo cash. Ceñirte a la SPEC.
+  ```
+- Resumen de la respuesta: `TripSummaryScreen` crea el checkout vía backend y abre WebView; al detectar la URL de retorno (o al tocar Verificar) llama a `verify`. Cash sigue marcándose en la app.
+- Qué se usó / modificado / descartó:
+  - Propuesto por la IA: `paymentsService`, `MercadoPagoCheckoutScreen`, cambios en resumen/contexto
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/services/paymentsService.js`, `src/config/backend.js`, `src/screens/MercadoPagoCheckoutScreen.js`, `src/screens/TripSummaryScreen.js`, `src/context/ActiveTripContext.js`, `src/navigation/TripStack.js`, `package.json`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `adb reverse tcp:8787 tcp:8787` + backend + viaje `--payment=mercadopago` hasta Checkout_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #59
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Tests de calculateFare e isTechnicalInspectionRequired
+- Prompt:
+  ```text
+  ¿Los casos de la SPEC de calculateFare y de la revisión técnico-mecánica ya los puedo correr como test? Además el de un día antes del plazo me estaba saliendo raro con las fechas.
+  ```
+- Resumen de la respuesta: Se agregó `npm test` con los casos de las secciones 10 y 5. Se normalizó el parseo a día calendario para que `2021-10-27` con hoy `2026-10-26` dé `false`.
+- Qué se usó / modificado / descartado:
+  - Propuesto por la IA: `test/*.test.mjs` + ajuste en `isTechnicalInspectionRequired.js` + `.env.example`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `test/calculateFare.test.mjs`, `test/isTechnicalInspectionRequired.test.mjs`, `src/validation/isTechnicalInspectionRequired.js`, `.env.example`, `.gitignore`, `package.json`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `npm test` (9 tests en verde)_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #60
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Retorno de Mercado Pago por constante HTTPS interceptada en el WebView
+- Prompt:
+  ```text
+  Lee docs/PROJECT_SPEC.md sección 9. La URL de retorno de Mercado Pago no apunta al backend: es una constante HTTPS (PAYMENT_RETURN_URL en src/config/payments.js) que el WebView intercepta con onShouldStartLoadWithRequest sin cargarla. Al interceptarla, la app llama a POST /payments/verify y el backend consulta el estado real del pago en la API de Mercado Pago. Elimina PUBLIC_BASE_URL y cualquier ruta de retorno del backend. Muéstrame el plan antes de cambiar código.
+  ```
+- Resumen de la respuesta: Se movió el retorno a `PAYMENT_RETURN_URL`, el WebView lo corta con `onShouldStartLoadWithRequest`, verify quedó en `POST /payments/verify` y se quitaron `PUBLIC_BASE_URL` y la ruta HTML de retorno.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: constante en app + interceptación WebView + cleanup del backend
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/config/payments.js`, `src/config/backend.js`, `src/services/paymentsService.js`, `src/screens/MercadoPagoCheckoutScreen.js`, `backend/src/config.js`, `backend/src/mercadopagoOrders.js`, `backend/src/server.js`, `backend/.env.example`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: checkout MP → redirect a PAYMENT_RETURN_URL → verify → trip `paid`/`approved`_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #61
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Corregir el formato de monto rechazado por Mercado Pago
+- Prompt:
+  ```text
+  Recibí este error
+
+  Mercado Pago create order failed: {"errors": [{"code":"property_value","message":"Invalid value for property","details":["'$.items[0].unit_price' - does not match pattern","'$.total_amount' - does not match pattern"]}]}
+  ```
+- Resumen de la respuesta: En COP la Orders API no acepta decimales; `formatAmount` ahora manda enteros (`"19200"` en vez de `"19200.00"`).
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: cambio en `formatAmount` del backend
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `backend/src/mercadopagoOrders.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: reiniciar backend y volver a "Pagar con Mercado Pago"_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #62
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: No mostrar Verificar pago durante el checkout
+- Prompt:
+  ```text
+  Cuando hice el pago con Mercado Pago, en la parte inferior mientras estoy en el checkout, me sale el botón de Verificar pago. ¿No debería retirarse mientras se realiza el pago?
+  ```
+- Resumen de la respuesta: El botón se oculta durante el Checkout; solo aparece si, tras interceptar el retorno, el pago sigue pendiente o falla la verificación.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `showVerifyButton` en `MercadoPagoCheckoutScreen`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/screens/MercadoPagoCheckoutScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: abrir checkout y confirmar que no hay footer; solo tras retorno pendiente_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #63
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Mapear rechazo de tarjeta cuando la orden sigue en waiting_retry
+- Prompt:
+  ```text
+  Es que es aquí en esta pantalla. Muestra que fue fallido, pero al darle volver sale lo del pago pendiente. Y así sale en Mercado Pago: Estado del recurso Fallido / Detalle Fallido.
+  ```
+- Resumen de la respuesta: La orden llega como `action_required`/`waiting_retry`, pero el pago interno ya es `failed`. `mapOrderPaymentStatus` ahora mira también `transactions.payments`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: ajuste del mapeo en `mercadopagoOrders.js`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `backend/src/mercadopagoOrders.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: reiniciar backend → Volver al sitio / Verificar pago → alert de rechazado_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #64
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Notificaciones FCM para solicitudes en segundo plano
+- Prompt:
+  ```text
+  Según la SPEC, FCM es obligatorio para las solicitudes con la app en segundo plano. ¿Me ayudas a dejar eso cableado?
+  ```
+- Resumen de la respuesta: Se registró el token con `expo-notifications`, se guarda en `drivers.fcmToken`, hay listener de push y el backend puede notificar conductores disponibles; el script `request-trip` intenta disparar ese aviso.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: servicio/listener push + endpoint `/notifications/trip-request`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/services/pushNotifications.js`, `src/components/PushNotificationListener.js`, `App.js`, `app.config.js`, `backend/src/pushNotifications.js`, `backend/src/server.js`, `scripts/createTripRequest.mjs`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: rebuild Android + Disponible + request-trip con backend; revisar `fcmToken` en Firestore_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #65
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Perfil editable según la SPEC
+- Prompt:
+  ```text
+  En perfil solo puedo ver los datos y cerrar sesión. Según la SPEC deberían ser editables. ¿Cómo lo dejo?
+  ```
+- Resumen de la respuesta: Perfil pasó a modo edición para nombre, celular, Mercado Pago, marca, modelo, color y capacidad; documento/correo/placa/categoría quedan de solo lectura.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: `driverProfileService` + formulario en `ProfileSettingsScreen`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/services/driverProfileService.js`, `src/screens/ProfileSettingsScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: Editar perfil → Guardar → ver el cambio en Firestore y al reabrir_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #66
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Cancelar viaje antes de in_progress
+- Prompt:
+  ```text
+  Además, según la tabla de estados debería poder cancelar el viaje mientras voy al pickup. ¿Me ayudas con eso?
+  ```
+- Resumen de la respuesta: `cancelTrip` valida con `canTransition` y escribe `cancelled`; el botón aparece en viaje en curso solo en `accepted` / `driver_arriving`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: acción en `ActiveTripContext` + UI en `TripInProgressScreen`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/context/ActiveTripContext.js`, `src/screens/TripInProgressScreen.js`, `src/utils/displayLabels.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: aceptar viaje → Cancelar viaje → documento `cancelled` y vuelta a Inicio_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #67
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Filtro por rango de fechas en el historial
+- Prompt:
+  ```text
+  En el historial me faltaría el rango de fechas que pide la SPEC, no solo hoy/semana/mes.
+  ```
+- Resumen de la respuesta: Se agregó el chip **Rango** con `DateField` Desde/Hasta y el filtrado sobre la fecha del viaje.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: cambios en `TripHistoryScreen`
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `src/screens/TripHistoryScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: Historial → Rango → elegir Desde/Hasta y ver la lista filtrada_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #68
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: FCM nativo con @react-native-firebase/messaging (app en segundo plano)
+- Prompt:
+  ```text
+  Lee docs/PROJECT_SPEC.md secciones 2 y 12. Ya coloqué google-services.json en la raíz del proyecto (registrado en Firebase como app Android com.juanp.uberclone, mismo proyecto que Firestore).
+
+  Objetivo: dejar funcionando las notificaciones push con @react-native-firebase/messaging para nuevas solicitudes, también con la app en segundo plano.
+
+  Haz lo siguiente:
+  1. En app.json: agrega "googleServicesFile": "./google-services.json" dentro de "android" y agrega el plugin "@react-native-firebase/app" a "plugins". Conserva todos los plugins que ya existen. Verifica que android.package sea exactamente com.juanp.uberclone.
+  2. Verifica que @react-native-firebase/app y @react-native-firebase/messaging estén instalados con versiones compatibles entre sí. Si falta alguno, instálalo con npx expo install.
+  3. No copies ni edites archivos dentro de android/ a mano: la configuración nativa debe salir de app.json vía prebuild.
+  4. Revisa el código existente de notificaciones y confirma que:
+     - se solicita el permiso POST_NOTIFICATIONS (Android 13+) antes de obtener el token;
+     - el token FCM nativo se guarda en drivers/{uid}.fcmToken y se actualiza con onTokenRefresh (con limpieza en useEffect);
+     - existe messaging().setBackgroundMessageHandler registrado en el archivo de entrada (index.js), fuera de cualquier componente;
+     - con la app en primer plano, onMessage muestra la solicitud entrante.
+  5. No uses expo-notifications ni tokens ExponentPushToken.
+  6. Mantén el SDK web de Firebase (paquete "firebase") para Firestore y Auth; no lo migres. Si hay alguna llamada a getAnalytics, elimínala porque no funciona en React Native.
+
+  Antes de cambiar código, muéstrame el plan con la lista de archivos que vas a modificar. Al terminar, dime los comandos exactos para reconstruir la app y registra la entrada en docs/AI_LOG.md.
+  ```
+- Resumen de la respuesta: Se migró el push a `@react-native-firebase/app` + `messaging` (ambos 27.1.1), se quitó `expo-notifications`, se cableó permiso/token/`onTokenRefresh`/`onMessage`/`setBackgroundMessageHandler` y `googleServicesFile` en `app.json`.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: config Expo + servicio FCM nativo + listener + index.js + ajuste backend
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `app.json`, `app.config.js`, `package.json`, `index.js`, `src/services/pushNotifications.js`, `src/components/PushNotificationListener.js`, `App.js`, `backend/src/pushNotifications.js`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
+- Verificación: _pendiente — sugerida: `npx expo prebuild --clean --platform android` + `npx expo run:android`; Disponible + backend + request-trip con app en segundo plano; `fcmToken` nativo en Firestore y `sent>=1`_
 - Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_

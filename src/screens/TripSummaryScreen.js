@@ -1,8 +1,9 @@
-// AI-assisted: see docs/AI_LOG.md #21, #27, #50
+// AI-assisted: see docs/AI_LOG.md #21, #27, #50, #58
 import React, { useCallback, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useActiveTrip } from '../context/ActiveTripContext';
 import { PRICING } from '../config/pricing';
+import { createMercadoPagoCheckout } from '../services/paymentsService';
 import {
   errorReasonLabel,
   paymentMethodLabel,
@@ -12,18 +13,15 @@ import { colors } from '../theme/colors';
 import { commonStyles } from '../theme/commonStyles';
 
 /**
- * Fare summary and cash payment confirmation.
+ * Fare summary with cash confirmation or Mercado Pago checkout.
  */
 export default function TripSummaryScreen({ navigation }) {
   const { trip, markPaid, clearTrip } = useActiveTrip();
   const [busy, setBusy] = useState(false);
 
-  const onConfirmPayment = useCallback(async () => {
+  const onConfirmCash = useCallback(async () => {
     if (trip?.paymentMethod !== 'cash') {
-      Alert.alert(
-        'Pago',
-        'Por ahora solo está habilitado el cobro en efectivo.'
-      );
+      Alert.alert('Pago', 'Este viaje no es en efectivo.');
       return;
     }
     setBusy(true);
@@ -43,6 +41,39 @@ export default function TripSummaryScreen({ navigation }) {
     }
   }, [markPaid, trip?.paymentMethod]);
 
+  const onOpenMercadoPago = useCallback(async () => {
+    if (trip?.paymentMethod !== 'mercadopago') {
+      Alert.alert('Pago', 'Este viaje no usa Mercado Pago.');
+      return;
+    }
+    if (!trip?.tripId || !Number.isFinite(Number(trip?.fare))) {
+      Alert.alert('Pago', 'Faltan datos del viaje para crear el checkout.');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const checkout = await createMercadoPagoCheckout({
+        tripId: trip.tripId,
+        amount: Number(trip.fare),
+      });
+      navigation.navigate('MercadoPagoCheckout', {
+        tripId: trip.tripId,
+        orderId: checkout.orderId,
+        checkoutUrl: checkout.checkoutUrl,
+      });
+    } catch (error) {
+      Alert.alert(
+        'Pago',
+        error instanceof Error
+          ? error.message
+          : 'No se pudo abrir Mercado Pago.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  }, [navigation, trip]);
+
   const onDone = useCallback(() => {
     clearTrip();
     navigation.navigate('Home');
@@ -55,6 +86,9 @@ export default function TripSummaryScreen({ navigation }) {
       </View>
     );
   }
+
+  const isCash = trip.paymentMethod === 'cash';
+  const isMercadoPago = trip.paymentMethod === 'mercadopago';
 
   return (
     <View style={[commonStyles.screenPadded, { justifyContent: 'center' }]}>
@@ -85,19 +119,39 @@ export default function TripSummaryScreen({ navigation }) {
       </View>
 
       {trip.status !== 'paid' ? (
-        <Pressable
-          style={[commonStyles.primaryButton, { marginTop: 20 }]}
-          onPress={onConfirmPayment}
-          disabled={busy}
-        >
-          {busy ? (
-            <ActivityIndicator color={colors.onPrimary} />
-          ) : (
-            <Text style={commonStyles.primaryButtonText}>
-              Confirmar pago en efectivo
-            </Text>
-          )}
-        </Pressable>
+        <>
+          {isCash ? (
+            <Pressable
+              style={[commonStyles.primaryButton, { marginTop: 20 }]}
+              onPress={onConfirmCash}
+              disabled={busy}
+            >
+              {busy ? (
+                <ActivityIndicator color={colors.onPrimary} />
+              ) : (
+                <Text style={commonStyles.primaryButtonText}>
+                  Confirmar pago en efectivo
+                </Text>
+              )}
+            </Pressable>
+          ) : null}
+
+          {isMercadoPago ? (
+            <Pressable
+              style={[commonStyles.primaryButton, { marginTop: 20 }]}
+              onPress={onOpenMercadoPago}
+              disabled={busy}
+            >
+              {busy ? (
+                <ActivityIndicator color={colors.onPrimary} />
+              ) : (
+                <Text style={commonStyles.primaryButtonText}>
+                  Pagar con Mercado Pago
+                </Text>
+              )}
+            </Pressable>
+          ) : null}
+        </>
       ) : (
         <Pressable style={[commonStyles.primaryButton, { marginTop: 20 }]} onPress={onDone}>
           <Text style={commonStyles.primaryButtonText}>Volver al inicio</Text>
@@ -118,7 +172,7 @@ function Row({ label, value, emphasize }) {
         style={[
           commonStyles.body,
           { fontWeight: '600' },
-          emphasize && { color: colors.accent, fontSize: 16 },
+          emphasize ? { color: colors.accent } : null,
         ]}
       >
         {value}

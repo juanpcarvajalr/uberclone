@@ -6,17 +6,47 @@ App móvil del conductor (React Native + Expo). Especificación: [`docs/PROJECT_
 
 - Node.js
 - Android SDK / emulador (development build; Google Maps no corre en Expo Go)
-- Variable `KEY` (Google Maps) en `.env` en la raíz del proyecto
-- Credenciales de pago solo en `backend/.env` (nunca en la app)
+- Variable `KEY` (Google Maps) en `.env` en la raíz del proyecto (ver `.env.example`)
+- Credenciales de pago solo en `backend/.env` (ver `backend/.env.example`; nunca en la app)
+- Cuenta de servicio de Firebase en `backend/serviceAccount.json` (no se sube a Git)
 
 ## Arranque
 
 ```bash
 npm install
+npm --prefix backend install
 npx expo run:android
 ```
 
+Backend de pagos (otra terminal):
+
+```bash
+# Emulador Android: reenvía el puerto del backend
+adb reverse tcp:8787 tcp:8787
+npm run backend
+```
+
+Variables mínimas en `backend/.env`: `MP_ACCESS_TOKEN`, `PORT`, `FIREBASE_SERVICE_ACCOUNT_PATH`.  
+La URL de retorno de Mercado Pago es la constante `PAYMENT_RETURN_URL` en `src/config/payments.js`. El WebView la intercepta con `onShouldStartLoadWithRequest` (no la carga) y la app llama a `POST /payments/verify` para que el backend consulte el estado real en la API de Mercado Pago.
+
 Si ADB falla en WSL, reinicia el daemon en Windows, abre el emulador y verifica con `adb devices`.
+
+Pruebas de tarifa y revisión técnico-mecánica:
+
+```bash
+npm test
+```
+
+### Push (FCM) en segundo plano
+
+Usa `@react-native-firebase/messaging` (SPEC). `google-services.json` va en la raíz del repo (`android.googleServicesFile`). La app guarda el token FCM nativo en `drivers/{uid}.fcmToken`. El script `request-trip` avisa vía `POST /notifications/trip-request` del backend.
+
+Tras cambiar plugins nativos:
+
+```bash
+npx expo prebuild --clean --platform android
+npx expo run:android
+```
 
 ## Simular un viaje (pasajero → conductor)
 
@@ -39,8 +69,8 @@ Usa la forma `--clave=valor` (así las direcciones con espacios no se parten al 
 ```bash
 npm run request-trip -- \
   --category=economy \
-  --payment=cash \
-  --origin="Altos de Polanco" \
+  --payment=mercadopago \
+  --origin="Territorio Robledo" \
   --destination="El Tesoro, El Poblado" \
   --tip=2000
 ```
@@ -65,7 +95,7 @@ El script arma un trip en `status: requested` con Distance Matrix **una vez** al
 | Destino | `--destination` → igual |
 | Distancia / duración | Distance Matrix |
 | Categoría | `--category` (`economy` \| `xl` \| `premium`) |
-| Método de pago | `--payment` (`mercadopago` \| `stripe` \| `cash`) |
+| Método de pago | `--payment` (`mercadopago` \| `cash`) |
 | Tarifa estimada | `calculateFare` → `fare` |
 | Ganancia neta estimada | `calculateFare` → `driverEarnings` |
 
@@ -83,7 +113,7 @@ Ayuda:
 npm run create-trip-request -- --help
 ```
 
-### 3. Flujo en la app (cash)
+### 3. Flujo en la app
 
 1. Debe abrirse **Solicitud entrante** (15 s para aceptar/rechazar). La app crea `trips/{tripId}` en Firestore con `status: requested`.
 2. Al **Aceptar**: Distance Matrix + Directions al pickup; el viaje pasa a `accepted` → `driver_arriving` y se guardan `driverId` / `vehicleId`.
@@ -91,8 +121,10 @@ npm run create-trip-request -- --help
 4. Al **aceptar**, Directions usa el **GPS actual del conductor → pickup**; el vehículo se simula sobre esa polyline.
 5. **Pasajero a bordo**: Directions **pickup → destino** y otra simulación sobre esa ruta (`in_progress` + `routePolyline`).
 6. **Finalizar viaje** → `completed` con tarifa final (`calculateFare`).
-7. **Marcar efectivo recibido** → `paid` + `paymentStatus: cash_received`.
-8. El viaje queda en **Historial** / **Ganancias** (saldo = −comisión en cash).
+7. Cobro:
+   - `--payment=cash` → **Confirmar pago en efectivo** → `paid` + `paymentStatus: cash_received`.
+   - `--payment=mercadopago` → con el backend corriendo, **Pagar con Mercado Pago** abre Checkout Pro (Orders). Al redirigir a `PAYMENT_RETURN_URL`, el WebView intercepta, la app llama a `POST /payments/verify` y el backend marca `paid` / `paymentStatus: approved`.
+8. El viaje queda en **Historial** / **Ganancias**.
 
 Publica `firestore.rules` si aún no lo hiciste (incluye `trips` y, si usas push, `devTriggers`).
 

@@ -14,6 +14,8 @@
       }
     },
     "android": {
+      "package": "com.juanp.uberclone",
+      "googleServicesFile": "./google-services.json",
       "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -24,7 +26,8 @@
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES",
-        "READ_EXTERNAL_STORAGE"
+        "READ_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS"
       ]
     },
     "plugins": [
@@ -34,7 +37,8 @@
           "photosPermission": "Necesitamos acceso a tus fotos para el registro del conductor.",
           "cameraPermission": "Necesitamos la cámara para tomar fotos del registro del conductor."
         }
-      ]
+      ],
+      "@react-native-firebase/app"
     ],
     "web": {
       "favicon": "./assets/favicon.png"

@@ -1,4 +1,4 @@
-// AI-assisted: see docs/AI_LOG.md #22, #27, #50
+// AI-assisted: see docs/AI_LOG.md #22, #27, #50, #67
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
@@ -8,10 +8,11 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
-import { isValid } from 'date-fns';
+import { endOfDay, isValid, startOfDay } from 'date-fns';
 import { useDriverSession } from '../context/DriverSessionContext';
 import { auth } from '../config/firebaseConfig';
 import { fetchTripsByDriver } from '../services/tripsService';
+import DateField from '../components/DateField';
 import {
   categoryLabel,
   paymentStatusLabel,
@@ -32,13 +33,13 @@ const FILTERS = [
   { key: 'today', label: 'Hoy' },
   { key: 'week', label: 'Semana' },
   { key: 'month', label: 'Mes' },
+  { key: 'range', label: 'Rango' },
 ];
 
 const PAYMENT_FILTERS = [
   { key: null, label: 'Pago' },
   { key: 'cash', label: 'Efectivo' },
   { key: 'mercadopago', label: 'Mercado Pago' },
-  { key: 'stripe', label: 'Stripe' },
 ];
 
 /**
@@ -49,6 +50,8 @@ export default function TripHistoryScreen({ navigation }) {
   const driverId = driver?.uid || auth.currentUser?.uid || null;
   const [period, setPeriod] = useState('all');
   const [paymentMethod, setPaymentMethod] = useState(null);
+  const [rangeFrom, setRangeFrom] = useState(null);
+  const [rangeTo, setRangeTo] = useState(null);
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -94,6 +97,22 @@ export default function TripHistoryScreen({ navigation }) {
         const date = tripEventDate(item);
         return isValid(date) && isSameAppMonth(date, now);
       });
+    } else if (period === 'range') {
+      const fromDate = rangeFrom ? startOfDay(new Date(rangeFrom)) : null;
+      const toDate = rangeTo ? endOfDay(new Date(rangeTo)) : null;
+      list = list.filter((item) => {
+        const date = tripEventDate(item);
+        if (!isValid(date)) {
+          return false;
+        }
+        if (fromDate && isValid(fromDate) && date < fromDate) {
+          return false;
+        }
+        if (toDate && isValid(toDate) && date > toDate) {
+          return false;
+        }
+        return Boolean(fromDate || toDate);
+      });
     }
 
     if (paymentMethod) {
@@ -101,7 +120,7 @@ export default function TripHistoryScreen({ navigation }) {
     }
 
     return list.slice(0, 20);
-  }, [trips, period, paymentMethod]);
+  }, [trips, period, paymentMethod, rangeFrom, rangeTo]);
 
   return (
     <View style={[commonStyles.screen, styles.topPad]}>
@@ -116,6 +135,21 @@ export default function TripHistoryScreen({ navigation }) {
           </Pressable>
         ))}
       </View>
+
+      {period === 'range' ? (
+        <View style={styles.rangeBox}>
+          <DateField
+            label="Desde"
+            value={rangeFrom}
+            onChange={setRangeFrom}
+          />
+          <DateField
+            label="Hasta"
+            value={rangeTo}
+            onChange={setRangeTo}
+          />
+        </View>
+      ) : null}
 
       <View style={styles.filters}>
         {PAYMENT_FILTERS.map((f) => (
@@ -185,6 +219,11 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.sm,
+  },
+  rangeBox: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   list: { padding: spacing.lg, gap: spacing.md },
   emptyContainer: { flexGrow: 1, justifyContent: 'center', padding: spacing.xxl },

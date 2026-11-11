@@ -3,7 +3,6 @@
 const PAYMENT_METHOD_LABELS = {
   cash: 'Efectivo',
   mercadopago: 'Mercado Pago',
-  stripe: 'Stripe',
 };
 
 const PAYMENT_STATUS_LABELS = {
@@ -98,7 +97,9 @@ export function errorReasonLabel(reason, fallback) {
   const known = {
     no_trip: 'No hay un viaje activo.',
     driver_not_authenticated: 'Debes iniciar sesión para continuar.',
-    only_cash_supported: 'Por ahora solo está habilitado el cobro en efectivo.',
+    only_cash_supported: 'Este viaje solo admite confirmación en efectivo.',
+    cancel_not_allowed:
+      'Solo puedes cancelar antes de que el pasajero esté a bordo.',
     account_not_approved: 'Tu cuenta aún no está aprobada.',
   };
   if (known[reason]) {

@@ -23,7 +23,7 @@ Aplicación móvil multiplataforma (iOS y Android), versión **conductor** de un
 - se pone Disponible y envía su ubicación en tiempo real;
 - recibe solicitudes con temporizador de 15 s para aceptar o rechazar;
 - navega al punto de recogida y luego al destino (Google Directions);
-- cobra con Mercado Pago (recomendado), Stripe (solo modo prueba) o efectivo;
+- cobra con Mercado Pago (Checkout Pro) o efectivo;
 - consulta tarifa, comisión (20 %), ganancia neta, historial y saldo.
 
 Existe una app de **pasajero** que comparte categorías y la función `calculateFare`.
@@ -228,8 +228,7 @@ Se usa **Context, no Redux**: el estado global es pequeño (sesión y viaje acti
 
 ## 9. Pasarela de pagos
 
-**Principal:** Mercado Pago Checkout Pro (cuentas de prueba vendedor/comprador + tarjetas de prueba).
-**Alternativa:** Stripe **solo en modo de prueba** (`sk_test` / `pk_test`, PaymentSheet).
+**Pasarela:** Mercado Pago Checkout Pro vía API de Orders (cuentas de prueba vendedor/comprador + tarjetas de prueba). Stripe quedó fuera del alcance del equipo.
 
 ### Flujo obligatorio
 
@@ -242,7 +241,7 @@ Se usa **Context, no Redux**: el estado global es pequeño (sesión y viaje acti
 
 ### Reglas de seguridad (no negociables)
 
-- `access_token` de Mercado Pago y secret key de Stripe **solo en el backend**, en `.env` excluido de Git.
+- `access_token` de Mercado Pago **solo en el backend**, en `.env` excluido de Git.
 - El repo incluye `.env.example` con los nombres de variables, sin valores.
 - Solo credenciales de prueba durante todo el proyecto.
 - Nunca pegar llaves, tokens ni datos personales reales en prompts de IA.
@@ -252,6 +251,12 @@ Se usa **Context, no Redux**: el estado global es pequeño (sesión y viaje acti
 El conductor marca el cobro como recibido. La plataforma no recibió dinero, así que la comisión se **descuenta del saldo** del conductor (puede quedar negativo). La liquidación se simula con un saldo en la app. *Split payments* reales = reto opcional de bonificación.
 
 ---
+
+### Reto opcional de bonificación: split payments
+
+- Objetivo: que la pasarela divida el pago real entre conductor (80 %) y plataforma (20 %), en lugar de simularlo con el saldo.
+- Enfoque tentativo: modelo marketplace de Mercado Pago (cuenta del conductor vinculada por OAuth + comisión de la plataforma en la orden). Validar en la documentación oficial de Checkout Pro vía Orders cómo se define la comisión de marketplace antes de empezar.
+- Solo se aborda cuando todos los entregables de la sección 14 estén completos.
 
 ## 10. Tarifa, comisión y ganancias
 
@@ -384,7 +389,7 @@ Estas reglas se implementan en `firestore.rules`. El `uid` es el de Firebase Aut
 | `category` | string | `economy`, `xl`, `premium` |
 | `fare`, `commission`, `tip`, `driverEarnings` | number | Pesos enteros |
 | `commissionRate` | number | Porcentaje aplicado en ese viaje (0.20) |
-| `paymentMethod` | string | `mercadopago`, `stripe`, `cash` |
+| `paymentMethod` | string | `mercadopago`, `cash` |
 | `paymentStatus`, `paymentId` | string | Respuesta de la pasarela |
 | `status` | string | Sección 7 |
 | `rating` | number | 1 a 5 |
@@ -446,7 +451,7 @@ Protocolo completo en `.cursor/rules/10-bitacora-ia.mdc` y skill `bitacora-ia`. 
 | ---------------------------------- | ------------------------------------------------------- | ---------------------------------------- | ------------------- |
 | Base de datos en tiempo real       | Firestore / MongoDB                                     | Firestore                                |                     |
 | Backend de pagos                   | Express / Cloud Functions                               | Express                                  |                     |
-| Pasarela                           | Mercado Pago / Stripe                                   | Mercado Pago                             |                     |
+| Pasarela                           | Mercado Pago / Stripe                                   | Mercado Pago (sin Stripe)                |                     |
 | Estado global                      | Context / Redux                                         | Context (`useContext` + `useReducer`)    |                     |
 | Librería de ubicación              | `@react-native-community/geolocation` / `expo-location` | `@react-native-community/geolocation`    |                     |
 | APIs de rutas                      | Directions + Distance Matrix / Routes API / OSRM        | Directions + Distance Matrix             |                     |
