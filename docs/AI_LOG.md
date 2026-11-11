@@ -1210,3 +1210,20 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Archivos y commit: `app.json`, `app.config.js`, `package.json`, `index.js`, `src/services/pushNotifications.js`, `src/components/PushNotificationListener.js`, `App.js`, `backend/src/pushNotifications.js`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
 - Verificación: _pendiente — sugerida: `npx expo prebuild --clean --platform android` + `npx expo run:android`; Disponible + backend + request-trip con app en segundo plano; `fcmToken` nativo en Firestore y `sent>=1`_
 - Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+
+### Entrada #69
+- Fecha: 2026-11-10
+- Integrante: Juan Pablo Carvajal Restrepo
+- Herramienta: Cursor (modo: Agent, modelo: Composer)
+- Objetivo: Aclarar si split payments exige configuración extra en Mercado Pago
+- Prompt:
+  ```text
+  ¿Para implementar Split payments necesito configurar algo más en MercadoPago?
+  ```
+- Resumen de la respuesta: Sí: el flujo actual con un solo `MP_ACCESS_TOKEN` no alcanza. Split 1:1 pide app marketplace, OAuth por conductor (seller) y `marketplace_fee` con el token del vendedor. Es reto opcional tras la sección 14.
+- Qué se usó / modificó / descartó:
+  - Propuesto por la IA: explicación de requisitos MP (OAuth, fee, tokens) sin cambios de código
+  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+- Archivos y commit: `ninguno` — Commit: pendiente
+- Verificación: _pendiente — sugerida: contrastar con docs Split de Pagos 1:1 de Mercado Pago Colombia_
+- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
