@@ -616,10 +616,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: `ImagePickerField` ahora ofrece Galería y Cámara (`launchCameraAsync` + permiso de cámara). Se declaró el permiso en `app.json`.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: `ImagePickerField.js` y permisos en `app.json`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/components/ImagePickerField.js`, `app.json` — Commit: pendiente
-- Verificación: _pendiente — sugerida: en registro usar Cámara, conceder permiso y ver la preview_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: En el registro probé Cámara, concedí el permiso y vi la preview antes de subir.
+- Aprendizaje: La SPEC pide cámara además de galería; hay que declarar el permiso y probar ese botón aparte.
 
 ### Entrada #38
 - Fecha: 2026-11-07
@@ -753,10 +753,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Conviene como herramienta de prueba. Se creó `buildTripRequest` + CLI `npm run create-trip-request`, que escribe `src/mocks/generatedIncomingRequest.json`; el botón Simular de la app carga esa solicitud y recalcula tarifa con `calculateFare`.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: factory, script CLI, JSON generado y cableado en `ActiveTripContext`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/utils/buildTripRequest.js`, `scripts/createTripRequest.mjs`, `scripts/esmResolveHook.mjs`, `scripts/registerEsmResolve.mjs`, `src/mocks/generatedIncomingRequest.json`, `src/context/ActiveTripContext.js`, `src/mocks/trips.js`, `package.json`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `npm run create-trip-request -- --category xl --km 8.5 --min 22 --payment cash`, recargar la app, Disponible + Simular, y revisar categoría/tarifa en Solicitud entrante_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Corrí create-trip-request, recargué la app y con Disponible + Simular revisé la solicitud; al inicio el modal no salía hasta alinear categoría y estado.
+- Aprendizaje: Generar el JSON no basta: la app tiene que consumirlo con el conductor Disponible y la categoría correcta.
 
 ### Entrada #45
 - Fecha: 2026-11-09
@@ -772,10 +772,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Sí: la spec guarda `category` en `driverLocations` para filtrar. Se aplicó el filtro en listener/inbox/botón Simular. Origen y destino los trae la solicitud (lado pasajero / Distance Matrix); el conductor no los digita, solo los ve y navega con Directions.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: filtro por categoría en `useTripRequests`, inbox HTTP y `HomeScreen`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/hooks/useTripRequests.js`, `scripts/createTripRequest.mjs`, `src/screens/HomeScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: con vehículo economy, lanzar solicitud `--category xl` (no debe abrir) y luego `--category economy` (sí debe abrir)_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Con vehículo economy mandé una solicitud xl y no abrió; con economy sí llegó la Solicitud entrante.
+- Aprendizaje: El filtro vive en la categoría del conductor; si no coincide, la solicitud queda en limbo.
 
 ### Entrada #46
 - Fecha: 2026-11-09
@@ -793,10 +793,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: El CLI pasa a ser simulador de pasajero: exige origen/destino/categoría/pago, llama Distance Matrix al crear y ofrece la solicitud. Al aceptar, Matrix otra vez + Directions al pickup; al “Pasajero a bordo”, Directions al destino con Polyline. Se añadió `scripts/request-trip.sh` (adb reverse + npm).
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: `googleMapsApi`, factory sin defaults de origen/destino, CLI + bash, accept/fase con APIs, `TripRouteMap`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/services/googleMapsApi.js`, `src/services/googleMaps.js`, `src/utils/decodePolyline.js`, `src/utils/buildTripRequest.js`, `scripts/createTripRequest.mjs`, `scripts/request-trip.sh`, `src/context/ActiveTripContext.js`, `src/screens/IncomingRequestScreen.js`, `src/screens/TripInProgressScreen.js`, `src/components/TripRouteMap.js`, `package.json`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `npm run request-trip -- --category economy --payment cash --origin "..." --origin-lat ... --origin-lng ... --destination "..." --dest-lat ... --dest-lng ...` con conductor Disponible; aceptar y comprobar ruta al pickup y luego al destino_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Corrí request-trip con conductor Disponible, acepté y vi la ruta al pickup y luego al destino.
+- Aprendizaje: El script hace de pasajero; el conductor solo ve origen/destino y navega, no los digita.
 
 ### Entrada #47
 - Fecha: 2026-11-09
@@ -822,10 +822,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: No hace falta mandar lat/lng: el modelo sí las guarda, pero el script geocodifica desde las direcciones. El bash no quita los parámetros del viaje; solo encadena `adb reverse` + el CLI para no correr dos comandos.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: `geocodeAddress` + CLI solo con `--origin` / `--destination` (coords opcionales)
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/services/googleMapsApi.js`, `scripts/createTripRequest.mjs`, `scripts/request-trip.sh`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `npm run request-trip -- --category economy --payment cash --origin "Calle 50 #46-36, Medellín" --destination "El Tesoro, El Poblado"` con Geocoding API habilitada en la KEY_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Ejecuté request-trip solo con --origin y --destination (sin lat/lng) y el script geocodificó solo.
+- Aprendizaje: Las coordenadas las resuelve Geocoding; el bash solo encadena adb reverse + el CLI.
 
 ### Entrada #48
 - Fecha: 2026-11-09
@@ -848,10 +848,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: `adb reverse` se colgaba y frenaba el bash; se puso timeout y se llama al CLI con `exec`. `REQUEST_DENIED` es restricción/permiso de la KEY (1 error en consola). Se documentó `--clave=valor` para no perder espacios con npm.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: timeout en `request-trip.sh`, parse `--key=value`, mensaje de error de Geocoding, README
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `scripts/request-trip.sh`, `scripts/createTripRequest.mjs`, `src/services/googleMapsApi.js`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `npm run request-trip -- --category=economy --payment=cash --origin="Altos de Polanco" --destination="El Tesoro, El Poblado"` con KEY válida para Geocoding_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Vi REQUEST_DENIED en Geocoding en la consola de Google; después de habilitar la API el script sacó Matrix/tarifa. El adb reverse ya no deja colgado el comando.
+- Aprendizaje: Si la KEY niega Geocoding, el CLI muere aunque Maps parezca bien; adb reverse no debe bloquear el script.
 
 ### Entrada #49
 - Fecha: 2026-11-09
@@ -865,10 +865,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: El registro crea drivers/vehicles/driverLocations. En consola solo hay que aprobar `accountStatus` y, si se prueba, alinear `vehicles.category` con el script. `trips` aún no lo escribe el flujo simulado; historial/ganancias siguen en mock. Publicar `firestore.rules` (incl. `devTriggers` si se usa push).
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: guía operativa de Firestore según secciones 5 y 11
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Acepté la guía y la apliqué en consola.
 - Archivos y commit: `ninguno` — Commit: pendiente
-- Verificación: _pendiente — sugerida: approved + category coincidente + Disponible + request-trip_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Aprobé accountStatus, alineé category con el script, puse Disponible y corrí request-trip.
+- Aprendizaje: El registro ya crea drivers/vehicles/locations; en consola solo apruebo y alineo categoría para probar.
 
 ### Entrada #50
 - Fecha: 2026-11-09
@@ -882,10 +882,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se creó `tripsService` y se cableó `receiveIncomingRequest` / `acceptTrip` / `rejectTrip` para escribir `trips/{tripId}` con las transiciones de la sección 7 (`requested` → `accepted`/`rejected`, luego `driver_arriving`).
 - Qué se usó / modificado / descartado:
   - Propuesto por la IA: servicio Firestore + `ActiveTripContext` con `onSnapshot` y `canTransition`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/services/tripsService.js`, `src/context/ActiveTripContext.js`, `src/hooks/useTripRequests.js`, `src/screens/IncomingRequestScreen.js`, `firestore.rules`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: Disponible + request-trip → ver documento en `trips` → aceptar/rechazar y confirmar `status`_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Tras request-trip vi el documento en trips; al aceptar/rechazar se actualizó el status en Firestore.
+- Aprendizaje: Sin persistir trips al recibir/aceptar/rechazar, historial y ganancias no tienen de dónde leer.
 
 ### Entrada #51
 - Fecha: 2026-11-09
@@ -899,10 +899,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: `markPassengerOnBoard` pide Directions al destino y pasa a `in_progress`; `completeTrip` recalcula con `calculateFare` y deja el viaje en `completed` con `completedAt`.
 - Qué se usó / modificado / descartado:
   - Propuesto por la IA: transiciones en `ActiveTripContext` + handlers async en `TripInProgressScreen`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/context/ActiveTripContext.js`, `src/screens/TripInProgressScreen.js`, `src/utils/calculateFare.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: aceptar → Pasajero a bordo → Finalizar y revisar `status`/`fare` en Firestore_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Acepté, pasé a Pasajero a bordo, finalicé y revisé status completed con fare y completedAt en Firestore.
+- Aprendizaje: Finalizar debe recalcular y dejar completed con tarifa; no solo cambiar de pantalla.
 
 ### Entrada #52
 - Fecha: 2026-11-09
@@ -916,10 +916,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: En resumen solo aparece “Marcar efectivo recibido”; `markPaid` escribe `status: paid` y `paymentStatus: cash_received`. Mercado Pago queda fuera de este tramo.
 - Qué se usó / modificado / descartado:
   - Propuesto por la IA: flujo cash en `TripSummaryScreen` + `markPaid` según sección 9 Efectivo
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/context/ActiveTripContext.js`, `src/screens/TripSummaryScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: finalizar viaje → marcar efectivo → documento en `paid` / `cash_received`_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Finalicé en cash, confirmé el pago en efectivo y el documento quedó paid / cash_received.
+- Aprendizaje: El estado de negocio es cash_received; en la UI debe verse como Efectivo, no el enum crudo.
 
 ### Entrada #53
 - Fecha: 2026-11-09
@@ -933,10 +933,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: `useEarnings`, Historial y Detalle pasan a `fetchTripsByDriver` / `fetchTripById`. El saldo se calcula (pasarela − comisión cash) sin campo guardado. Se quitó `MOCK_TRIPS` de esas pantallas.
 - Qué se usó / modificado / descartado:
   - Propuesto por la IA: lectura Firestore en hooks/pantallas + Polyline del `routePolyline` guardado en el detalle
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/hooks/useEarnings.js`, `src/screens/TripHistoryScreen.js`, `src/screens/TripDetailScreen.js`, `src/screens/EarningsScreen.js`, `src/services/tripsService.js`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: viaje `paid` → abrir Historial/Ganancias y ver el mismo `tripId`_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Con el viaje paid abrí Historial/Ganancias; al principio “Hoy” salía vacío por la hora del emulador, y al alinearla ya apareció el mismo tripId.
+- Aprendizaje: Si el emulador tiene fecha vieja, el filtro Hoy descarta viajes aunque estén en Firestore.
 
 ### Entrada #54
 - Fecha: 2026-11-09
@@ -950,10 +950,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: `upsertDriverLocation` escribe al cambiar disponibilidad/ubicación; el GPS queda montado a nivel app con `DriverLocationListener` para no cortarse al salir de Inicio.
 - Qué se usó / modificado / descartado:
   - Propuesto por la IA: `driverLocationService` + sync en `DriverSessionContext` + listener global
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/services/driverLocationService.js`, `src/context/DriverSessionContext.js`, `src/hooks/useDriverLocation.js`, `src/components/DriverLocationListener.js`, `App.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: Disponible ON → mover GPS/emulador → ver `location`/`updatedAt` en `driverLocations/{uid}`_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Puse Disponible, moví el GPS del emulador y vi location/updatedAt en driverLocations/{uid}.
+- Aprendizaje: El GPS tiene que vivir a nivel app; si solo corre en Inicio, al salir deja de actualizar.
 
 ### Entrada #55
 - Fecha: 2026-11-10
@@ -967,10 +967,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se quitó Stripe de filtros, validadores, mocks, README y SPEC; `paymentMethod` queda en `mercadopago` | `cash`.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: limpieza en app/docs/reglas de seguridad
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/utils/displayLabels.js`, `src/utils/buildTripRequest.js`, `src/screens/TripHistoryScreen.js`, `src/mocks/trips.js`, `scripts/createTripRequest.mjs`, `docs/PROJECT_SPEC.md`, `PROJECT_SPEC.md`, `README.md`, `.cursor/rules/20-seguridad.mdc`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `rg stripe` sin usos funcionales; script con `--payment=mercadopago|cash`_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Confirmé que el script y la app solo aceptan mercadopago o cash y ya no hay flujo Stripe activo.
+- Aprendizaje: Dejar una pasarela “por si acaso” ensucia filtros, mocks y la SPEC.
 
 ### Entrada #56
 - Fecha: 2026-11-10
@@ -984,10 +984,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se creó Express en `backend/` con `POST /payments/mercadopago/checkout` usando la API de Orders (`checkout_url`, no Preferences) y página de retorno.
 - Qué se usó / modificado / descartó:
   - Propuesto por la IA: `backend/src/server.js`, `mercadopagoOrders.js`, `config.js`, `.env.example`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `backend/package.json`, `backend/.env.example`, `backend/src/config.js`, `backend/src/mercadopagoOrders.js`, `backend/src/server.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `npm --prefix backend start` con `MP_ACCESS_TOKEN` y cuenta de servicio Firebase_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Armé backend/.env con MP_ACCESS_TOKEN, puse serviceAccount.json y arranqué el backend en 8787.
+- Aprendizaje: Sin la cuenta de servicio el backend no puede marcar el viaje; el token solo crea la orden.
 
 ### Entrada #57
 - Fecha: 2026-11-10
@@ -1001,10 +1001,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: `verify` y webhook consultan `GET /v1/orders/{id}`; si `processed`/`accredited`, Admin SDK escribe `paymentStatus: approved`, `paymentId` y `status: paid`.
 - Qué se usó / modificado / descartó:
   - Propuesto por la IA: `firestoreAdmin.js`, `tripPayments.js`, rutas verify/webhook
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `backend/src/firestoreAdmin.js`, `backend/src/tripPayments.js`, `backend/src/server.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: viaje `completed` + orden acreditada → documento `paid`/`approved` en Firestore_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Tras un checkout acreditado, verify dejó el viaje en paid / approved consultando la orden en Mercado Pago.
+- Aprendizaje: La app no debe marcar pagado sola: verify/webhook miran el estado real en la API de MP.
 
 ### Entrada #58
 - Fecha: 2026-11-10
@@ -1018,10 +1018,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: `TripSummaryScreen` crea el checkout vía backend y abre WebView; al detectar la URL de retorno (o al tocar Verificar) llama a `verify`. Cash sigue marcándose en la app.
 - Qué se usó / modificado / descartó:
   - Propuesto por la IA: `paymentsService`, `MercadoPagoCheckoutScreen`, cambios en resumen/contexto
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/services/paymentsService.js`, `src/config/backend.js`, `src/screens/MercadoPagoCheckoutScreen.js`, `src/screens/TripSummaryScreen.js`, `src/context/ActiveTripContext.js`, `src/navigation/TripStack.js`, `package.json`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `adb reverse tcp:8787 tcp:8787` + backend + viaje `--payment=mercadopago` hasta Checkout_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Con adb reverse 8787, backend arriba y --payment=mercadopago llegué al Checkout Pro desde el resumen.
+- Aprendizaje: En el emulador hace falta adb reverse al puerto del backend para que el WebView hable con localhost.
 
 ### Entrada #59
 - Fecha: 2026-11-10
@@ -1035,10 +1035,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se agregó `npm test` con los casos de las secciones 10 y 5. Se normalizó el parseo a día calendario para que `2021-10-27` con hoy `2026-10-26` dé `false`.
 - Qué se usó / modificado / descartado:
   - Propuesto por la IA: `test/*.test.mjs` + ajuste en `isTechnicalInspectionRequired.js` + `.env.example`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `test/calculateFare.test.mjs`, `test/isTechnicalInspectionRequired.test.mjs`, `src/validation/isTechnicalInspectionRequired.js`, `.env.example`, `.gitignore`, `package.json`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `npm test` (9 tests en verde)_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Corrí npm test y quedaron en verde los casos de calculateFare y de la revisión técnico-mecánica, incluido el del día anterior al plazo.
+- Aprendizaje: Las fechas YYYY-MM-DD hay que tratarlas como día civil; si no, el caso de un día antes falla por zona horaria.
 
 ### Entrada #60
 - Fecha: 2026-11-10
@@ -1052,10 +1052,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se movió el retorno a `PAYMENT_RETURN_URL`, el WebView lo corta con `onShouldStartLoadWithRequest`, verify quedó en `POST /payments/verify` y se quitaron `PUBLIC_BASE_URL` y la ruta HTML de retorno.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: constante en app + interceptación WebView + cleanup del backend
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/config/payments.js`, `src/config/backend.js`, `src/services/paymentsService.js`, `src/screens/MercadoPagoCheckoutScreen.js`, `backend/src/config.js`, `backend/src/mercadopagoOrders.js`, `backend/src/server.js`, `backend/.env.example`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: checkout MP → redirect a PAYMENT_RETURN_URL → verify → trip `paid`/`approved`_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: En el checkout el retorno apuntó a PAYMENT_RETURN_URL, el WebView la interceptó, llamó verify y el viaje pasó a paid/approved.
+- Aprendizaje: El retorno es una constante HTTPS que el WebView corta; no una ruta del backend.
 
 ### Entrada #61
 - Fecha: 2026-11-10
@@ -1071,10 +1071,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: En COP la Orders API no acepta decimales; `formatAmount` ahora manda enteros (`"19200"` en vez de `"19200.00"`).
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: cambio en `formatAmount` del backend
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `backend/src/mercadopagoOrders.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: reiniciar backend y volver a "Pagar con Mercado Pago"_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Reinicié el backend y al pagar de nuevo ya no falló unit_price/total_amount; entró al Checkout.
+- Aprendizaje: En COP la Orders API quiere enteros ("19200"), no "19200.00".
 
 ### Entrada #62
 - Fecha: 2026-11-10
@@ -1088,10 +1088,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: El botón se oculta durante el Checkout; solo aparece si, tras interceptar el retorno, el pago sigue pendiente o falla la verificación.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: `showVerifyButton` en `MercadoPagoCheckoutScreen`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/screens/MercadoPagoCheckoutScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: abrir checkout y confirmar que no hay footer; solo tras retorno pendiente_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Abrí el Checkout y el footer de Verificar pago ya no aparece; solo si tras el retorno sigue pendiente.
+- Aprendizaje: El verify es respaldo post-retorno; durante el WebView solo estorba.
 
 ### Entrada #63
 - Fecha: 2026-11-10
@@ -1105,10 +1105,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: La orden llega como `action_required`/`waiting_retry`, pero el pago interno ya es `failed`. `mapOrderPaymentStatus` ahora mira también `transactions.payments`.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: ajuste del mapeo en `mercadopagoOrders.js`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `backend/src/mercadopagoOrders.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: reiniciar backend → Volver al sitio / Verificar pago → alert de rechazado_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Con tarjeta de prueba rechazada, Volver/Verificar ya muestra rechazo en vez de pago pendiente.
+- Aprendizaje: Hay que mirar transactions.payments; el status externo de la orden puede seguir en waiting_retry.
 
 ### Entrada #64
 - Fecha: 2026-11-10
@@ -1122,10 +1122,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se registró el token con `expo-notifications`, se guarda en `drivers.fcmToken`, hay listener de push y el backend puede notificar conductores disponibles; el script `request-trip` intenta disparar ese aviso.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: servicio/listener push + endpoint `/notifications/trip-request`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual como primer cableado; después lo reemplacé por FCM nativo (#68).
 - Archivos y commit: `src/services/pushNotifications.js`, `src/components/PushNotificationListener.js`, `App.js`, `app.config.js`, `backend/src/pushNotifications.js`, `backend/src/server.js`, `scripts/createTripRequest.mjs`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: rebuild Android + Disponible + request-trip con backend; revisar `fcmToken` en Firestore_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Acepté el permiso y vi el aviso al volver a la app; en segundo plano en el emulador no bastó con expo-notifications.
+- Aprendizaje: Aceptar notificaciones no alcanza: en background del emulador hace falta FCM nativo y rebuild.
 
 ### Entrada #65
 - Fecha: 2026-11-10
@@ -1139,10 +1139,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Perfil pasó a modo edición para nombre, celular, Mercado Pago, marca, modelo, color y capacidad; documento/correo/placa/categoría quedan de solo lectura.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: `driverProfileService` + formulario en `ProfileSettingsScreen`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado con ajuste: pedí que los campos editables se comporten como en el registro (selectores donde aplica).
 - Archivos y commit: `src/services/driverProfileService.js`, `src/screens/ProfileSettingsScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: Editar perfil → Guardar → ver el cambio en Firestore y al reabrir_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Edité perfil, guardé y al reabrir vi el cambio; también lo contrasté en Firestore.
+- Aprendizaje: Editable no es cualquier TextInput: mismas validaciones y controles que el registro.
 
 ### Entrada #66
 - Fecha: 2026-11-10
@@ -1156,10 +1156,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: `cancelTrip` valida con `canTransition` y escribe `cancelled`; el botón aparece en viaje en curso solo en `accepted` / `driver_arriving`.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: acción en `ActiveTripContext` + UI en `TripInProgressScreen`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/context/ActiveTripContext.js`, `src/screens/TripInProgressScreen.js`, `src/utils/displayLabels.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: aceptar viaje → Cancelar viaje → documento `cancelled` y vuelta a Inicio_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Acepté un viaje, cancelé yendo al pickup y el documento quedó cancelled; volví a Inicio.
+- Aprendizaje: La tabla de estados permite cancelar en accepted/driver_arriving, no después de in_progress.
 
 ### Entrada #67
 - Fecha: 2026-11-10
@@ -1173,10 +1173,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se agregó el chip **Rango** con `DateField` Desde/Hasta y el filtrado sobre la fecha del viaje.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: cambios en `TripHistoryScreen`
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual.
 - Archivos y commit: `src/screens/TripHistoryScreen.js`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: Historial → Rango → elegir Desde/Hasta y ver la lista filtrada_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: En Historial usé el chip Rango con Desde/Hasta y la lista filtró por esa ventana.
+- Aprendizaje: Hoy/semana/mes no cubren la SPEC; hace falta un rango libre.
 
 ### Entrada #68
 - Fecha: 2026-11-10
@@ -1206,10 +1206,10 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Se migró el push a `@react-native-firebase/app` + `messaging` (ambos 27.1.1), se quitó `expo-notifications`, se cableó permiso/token/`onTokenRefresh`/`onMessage`/`setBackgroundMessageHandler` y `googleServicesFile` en `app.json`.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: config Expo + servicio FCM nativo + listener + index.js + ajuste backend
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Usado tal cual la migración a @react-native-firebase/messaging; tuve que reconstruir Android con prebuild.
 - Archivos y commit: `app.json`, `app.config.js`, `package.json`, `index.js`, `src/services/pushNotifications.js`, `src/components/PushNotificationListener.js`, `App.js`, `backend/src/pushNotifications.js`, `README.md`, `docs/AI_LOG.md` — Commit: pendiente
-- Verificación: _pendiente — sugerida: `npx expo prebuild --clean --platform android` + `npx expo run:android`; Disponible + backend + request-trip con app en segundo plano; `fcmToken` nativo en Firestore y `sent>=1`_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Corrí prebuild --clean y run:android; con Disponible, backend y request-trip en segundo plano revisé fcmToken nativo en Firestore.
+- Aprendizaje: Pasar a messaging nativo implica prebuild limpio y el package exacto; el permiso solo no prueba el push en background.
 
 ### Entrada #69
 - Fecha: 2026-11-10
@@ -1223,7 +1223,7 @@ Este archivo documenta **todo** uso de herramientas de inteligencia artificial e
 - Resumen de la respuesta: Sí: el flujo actual con un solo `MP_ACCESS_TOKEN` no alcanza. Split 1:1 pide app marketplace, OAuth por conductor (seller) y `marketplace_fee` con el token del vendedor. Es reto opcional tras la sección 14.
 - Qué se usó / modificó / descartó:
   - Propuesto por la IA: explicación de requisitos MP (OAuth, fee, tokens) sin cambios de código
-  - Decisión del integrante: _pendiente — completar: usado tal cual / modificado (cómo) / descartado (por qué)_
+  - Decisión del integrante: Acepté la explicación; no implementé Split por falta de tiempo.
 - Archivos y commit: `ninguno` — Commit: pendiente
-- Verificación: _pendiente — sugerida: contrastar con docs Split de Pagos 1:1 de Mercado Pago Colombia_
-- Aprendizaje: _pendiente — lo escribe el integrante con sus palabras_
+- Verificación: Contrasté con la doc de Split 1:1 de Mercado Pago Colombia: pide marketplace, OAuth del conductor y marketplace_fee.
+- Aprendizaje: Con un solo MP_ACCESS_TOKEN no hay split; hace falta app marketplace y OAuth por conductor.
